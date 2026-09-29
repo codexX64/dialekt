@@ -57,7 +57,8 @@ Compteurs de duels : sept jours, pour appliquer les plafonds de dépense.
   - Rectification : facteurs et adresse d'alerte depuis la page Sécurité ;
     nom affiché et rôle, auprès de l'exploitant.
   - Effacement : chaque conversation se supprime depuis Oracle ; le compte et
-    tout ce qui s'y rattache sont effacés par un administrateur.
+    tout ce qui s'y rattache, depuis la page Sécurité, « Supprimer mon compte »
+    (une confirmation récente est demandée), ou par un administrateur.
   - Toute demande : auprès de l'exploitant de cette instance.
 
 5. SÉCURITÉ ET INCIDENTS

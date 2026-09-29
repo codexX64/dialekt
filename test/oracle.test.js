@@ -168,6 +168,18 @@ test('données d’un compte : export complet sous renfort, effacement à la sup
   for (const table of ['conversations', 'projects', 'quotas']) assert.equal(o.db.prepare(`SELECT COUNT(*) n FROM ${table} WHERE compte = ?`).get(id).n, 0, table);
 });
 
+test('effacement en libre-service : identifiant retapé ; conversations, projets et quotas partent avec le compte', async () => {
+  const { client: eli } = await membreInvite(admin, () => o.client(), { identifiant: 'eliott' });
+  lireSse((await eli.post('/api/duel/stream', { q: 'Question d’Eliott sur ses sauvegardes', noclaude: true })).texte);
+  await eli.post('/api/projects', { name: 'Brouillons' });
+  const id = o.db.prepare("SELECT id FROM socle_comptes WHERE identifiant = 'eliott'").get().id;
+  assert.equal(o.db.prepare('SELECT COUNT(*) n FROM conversations WHERE compte = ?').get(id).n, 1);
+  assert.equal((await eli.post('/api/compte/supprimer', { identifiant: 'dora' })).status, 400, 'identifiant retapé');
+  assert.equal((await eli.post('/api/compte/supprimer', { identifiant: 'eliott' })).status, 200);
+  for (const table of ['conversations', 'projects', 'quotas']) assert.equal(o.db.prepare(`SELECT COUNT(*) n FROM ${table} WHERE compte = ?`).get(id).n, 0, table);
+  assert.equal((await eli.get('/api/projects')).status, 401, 'session partie avec le compte');
+});
+
 
 test('le jeton du Hub n’ouvre que duel, chiffres et état', async () => {
   const h = { authorization: `Bearer ${JETON_HUB}` };
