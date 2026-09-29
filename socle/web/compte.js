@@ -118,6 +118,21 @@ export function dialogue({ titre, texte, contenu = [], boutons = [], large = fal
   });
 }
 
+// Effacement du compte par lui-même : l'identifiant retapé, puis le renfort
+// que le serveur demande. Rien n'est effacé tant que le serveur n'a pas dit oui.
+async function supprimerCompte(api, c) {
+  const champ = h('input', { type: 'text', autocomplete: 'off', spellcheck: 'false', 'aria-label': 'Identifiant', placeholder: c.identifiant });
+  const fait = await dialogue({
+    titre: 'Supprimer ton compte ?',
+    texte: 'Le compte, ses facteurs, ses appareils et ce que le service garde de lui sont effacés, sans retour possible. Retape ton identifiant pour confirmer.',
+    contenu: [champ],
+    boutons: [{ texte: 'Annuler', classe: 'flat', valeur: false }, { texte: 'Supprimer', classe: 'danger solid', agir: async () => {
+      try { await api.post('/api/compte/supprimer', { identifiant: champ.value }); return true; } catch (e) { toast(e.message, true); return false; }
+    } }],
+  });
+  if (fait) location.replace('/');
+}
+
 export const confirmer = (titre, texte, { danger = false, oui = 'Confirmer' } = {}) =>
   dialogue({ titre, texte, boutons: [{ texte: 'Annuler', classe: 'flat', valeur: false }, { texte: oui, classe: danger ? 'danger solid' : 'solid', valeur: true }] }).then(Boolean);
 
@@ -654,7 +669,7 @@ export function pageSecurite(api, { service, confidentialite = null }) {
           c.courriel ? action('Retirer', 'flat danger cache-s', async () => { if (await confirmer('Retirer l’adresse ?', 'Les alertes ne seront plus envoyées. L’adresse actuelle en sera prévenue.', { danger: true, oui: 'Retirer' })) { await api.del('/api/compte/courriel'); toast('Adresse retirée.'); } }) : null])
         : h('div', { class: 'pad' }, h('div', { class: 'note info' }, icone('alerte'), h('div', { text: 'Ce service n’envoie pas encore de courriel : l’administrateur doit lui indiquer un relais SMTP. En attendant, les alertes restent visibles ci-dessous.' }))));
 
-    const donnees = h('div', { class: 'card' }, h('header', {}, h('h2', { text: 'Mes données' }), h('p', {}, 'Tout ce que ce service garde de ton compte, dans un fichier JSON. Pour supprimer le compte et ses données, un administrateur s’en charge depuis la page Comptes.',
+    const donnees = h('div', { class: 'card' }, h('header', {}, h('h2', { text: 'Mes données' }), h('p', {}, 'Tout ce que ce service garde de ton compte, dans un fichier JSON ; et le compte lui-même, que tu peux supprimer avec ce qu’il contient.',
       confidentialite ? [' ', h('a', { href: confidentialite, target: '_blank', rel: 'noopener', text: 'Ce que le service garde, et pourquoi' }), '.'] : null)),
       ligne('telecharge', 'Exporter mes données', 'Compte, facteurs (sans leurs secrets), appareils, événements et contenus du service', [action('Exporter', '', async () => {
         const exporte = await api.get('/api/compte/export');
@@ -662,7 +677,8 @@ export function pageSecurite(api, { service, confidentialite = null }) {
         const lien = h('a', { href: url, download: `${service.toLowerCase().replace(/[^a-z0-9-]+/g, '-')}-${c.identifiant.replace(/[^\w-]+/g, '_')}.json`, hidden: true });
         document.body.append(lien); lien.click(); lien.remove();
         setTimeout(() => URL.revokeObjectURL(url), 10_000);
-      })]));
+      })]),
+      ligne('corbeille', 'Supprimer mon compte', c.role === 'admin' ? 'Possible s’il reste un autre administrateur actif' : 'Le compte, ses facteurs, ses appareils et ce que le service garde de lui', [action('Supprimer', 'flat danger', () => supprimerCompte(api, c))]));
 
     page.replaceChildren(...[
       h('div', { class: 'headrow' }, h('div', {}, h('h1', { class: 'title', text: 'Sécurité' }), h('p', { class: 'lede', text: `Connecté en tant que ${c.identifiant} (${c.role}). Chaque changement ici demande une confirmation récente et ferme tes autres sessions.` }))),

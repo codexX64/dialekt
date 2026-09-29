@@ -77,10 +77,10 @@ export class Portail {
     if (METHODES_SURES.has(ctx.req.method)) return;
     const o = ctx.req.headers.origin;
     const permises = [ctx.origine, ...this.originesEnPlus];
-    if (o) { if (!permises.includes(o)) throw new ErreurHttp(403, 'Origine refusée.'); return; }
+    if (o) { if (!permises.includes(o)) this.refuser(ctx, 'origine', 'Origine refusée.'); return; }
     const ref = ctx.req.headers.referer;
     if (ref) { try { if (permises.includes(new URL(ref).origin)) return; } catch { /* rejeté plus bas */ } }
-    throw new ErreurHttp(403, 'Origine absente : requête refusée.');
+    this.refuser(ctx, 'origine', 'Origine absente : requête refusée.');
   }
 
   controlerCsrf(ctx) {
@@ -88,8 +88,15 @@ export class Portail {
     this.controlerOrigine(ctx);
     const envoye = String(ctx.req.headers['x-csrf'] || '');
     if (!ctx.session || envoye.length !== ctx.session.csrf.length || sha256hex(envoye) !== sha256hex(ctx.session.csrf)) {
-      throw new ErreurHttp(403, 'Jeton anti-CSRF invalide : recharge la page.');
+      this.refuser(ctx, 'csrf', 'Jeton anti-CSRF invalide : recharge la page.');
     }
+  }
+
+  // Une requête d'un autre site ou sans jeton anti-CSRF est une tentative
+  // possible : elle compte parmi les refus que la vigie surveille.
+  refuser(ctx, motif, message) {
+    this.comptes.journal.rare(`${motif}:${ctx.ip}`, { acteur: ctx.session?.compte ?? null, action: 'acces.refuse', objet: new URL(ctx.req.url, 'http://x').pathname, ip: ctx.ip, resultat: 'refus', details: { cause: motif } });
+    throw new ErreurHttp(403, message);
   }
 
   // À appeler en tête de chaque route protégée du service.
@@ -314,6 +321,13 @@ export class Portail {
       c.exigerRenfort(s);
       c.trace({ acteur: s.compte, action: 'compte.export', objet: s.compte, ip });
       return { service: this.service.nom, exporte: new Date().toISOString(), ...c.donneesDe(s.compte), ...(this.exporteur ? { [this.service.id]: await this.exporteur(s.compte) } : {}) };
+    }
+    if (m === 'POST' && p === '/api/compte/supprimer') {
+      const s = sessionPleine();
+      const b = await this.corps(ctx, { identifiant: { type: 'chaine', requis: true, max: 80 } });
+      c.supprimerSoi(s, { identifiant: b.identifiant, ip });
+      this.effacerSession(ctx);
+      return { ok: true };
     }
     if (m === 'POST' && p === '/api/compte/alertes/vues') { const s = sessionPleine(); await this.corps(ctx, {}); c.marquerAlertesVues(s.compte); return { ok: true }; }
 

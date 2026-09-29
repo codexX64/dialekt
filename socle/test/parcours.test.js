@@ -184,6 +184,8 @@ test('CSRF : origine étrangère, origine absente, jeton manquant', async () => 
   assert.equal(r.status, 415, 'corps de formulaire refusé');
   r = await s.client().post('/api/compte/connexion', { identifiant: 'ana', motDePasse: MDP }, { origine: 'https://evil.example' });
   assert.equal(r.status, 403, 'connexion forcée depuis un autre site : ' + JSON.stringify(r.json));
+  const refus = s.socle.journal.lire({ limite: 50 }).filter(l => l.action === 'acces.refuse');
+  assert.ok(refus.some(l => l.details?.cause === 'origine') && refus.some(l => l.details?.cause === 'csrf'), 'refus journalisés pour la vigie');
 });
 
 let membre, secretMembre;
@@ -267,4 +269,36 @@ test('flux ouvert : vérifier une session ne la prolonge pas, une révocation la
   assert.equal(s.socle.comptes.sessionVivante(j2), true);
   assert.equal((await neuf.post('/api/compte/deconnexion')).status, 200);
   assert.equal(s.socle.comptes.sessionVivante(j2), false);
+});
+
+test('effacement : le compte se supprime lui-même, sous renfort, identifiant retapé ; le dernier administrateur reste', async () => {
+  // La session de l'administrateur a expiré au parcours précédent : une neuve.
+  admin = s.client();
+  await connexionCle(admin, cleAdmin);
+  const renforcerAdmin = async () => {
+    const o = await admin.post('/api/compte/renfort/options');
+    await admin.post('/api/compte/renfort', { methode: 'cle', reponse: cleAdmin.signer(o.json, admin.origine) });
+  };
+  avance(6 * 60e3);
+  await renforcerAdmin();
+  let r = await admin.post('/api/compte/admin/comptes', { identifiant: 'chloe', role: 'lecture' });
+  const chloe = s.client();
+  await chloe.post('/api/compte/jeton', { usage: 'invitation', jeton: r.json.lien.split('#invitation=')[1], motDePasse: 'chloe a sa propre phrase' });
+  const secret = (await chloe.post('/api/compte/totp')).json.secret;
+  assert.equal((await chloe.post('/api/compte/totp/confirmer', { code: codeTotp(secret) })).json.niveau, 'complet');
+  avance(6 * 60e3);
+  r = await chloe.post('/api/compte/supprimer', { identifiant: 'chloe' });
+  assert.equal(r.status, 403);
+  assert.ok(r.json.details.renfort, 'renfort exigé');
+  avance(31_000);
+  assert.equal((await chloe.post('/api/compte/renfort', { methode: 'totp', code: codeTotp(secret) })).status, 200);
+  assert.equal((await chloe.post('/api/compte/supprimer', { identifiant: 'bruno' })).status, 400, 'identifiant retapé');
+  assert.equal((await chloe.post('/api/compte/supprimer', { identifiant: ' Chloe ' })).status, 200);
+  assert.equal((await chloe.get('/api/lecture')).status, 401, 'session partie avec le compte');
+  assert.ok(!(await admin.get('/api/compte/admin/comptes')).json.comptes.some(x => x.identifiant === 'chloe'));
+  assert.ok(s.socle.journal.lire({ limite: 20 }).some(l => l.action === 'compte.supprime' && l.details?.soi === true));
+  await renforcerAdmin();
+  r = await admin.post('/api/compte/supprimer', { identifiant: 'ana' });
+  assert.equal(r.status, 409, 'dernier administrateur actif');
+  assert.equal((await admin.get('/api/lecture')).status, 200);
 });

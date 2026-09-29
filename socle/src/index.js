@@ -24,6 +24,7 @@ export { Limiteur } from './limiteur.js';
 export { Coffre } from './chiffre.js';
 export { Postier } from './courriel.js';
 export { envelopper, requeteCourante } from './requete.js';
+export { sauvegarder, dechiffrer } from './sauvegarde.js';
 
 const NIVEAU = { type: 'choix', parmi: ['desactive', 'facultatif', 'requis', 'requis_admin'] };
 

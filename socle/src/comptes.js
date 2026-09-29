@@ -757,12 +757,30 @@ export class Comptes {
     const c = this.compte(id);
     if (!c) throw erreur(404, 'Compte inconnu.');
     if (c.role === 'admin') this.exigerUnAutreAdmin(c.id);
+    this.effacer(c);
+    this.trace({ acteur: admin.compte, action: 'compte.supprime', objet: c.id, ip, details: { identifiant: c.identifiant } });
+  }
+
+  // Effacement demandé par le compte lui-même (SEC-PRIV-004) : renfort, et
+  // l'identifiant retapé pour qu'un clic égaré n'efface rien. Le dernier
+  // administrateur actif reste : l'installation n'aurait plus personne.
+  supprimerSoi(session, { identifiant, ip }) {
+    this.exigerRenfort(session);
+    const c = this.compte(session.compte);
+    if (normaliseIdentifiant(identifiant) !== c.identifiant) throw erreur(400, 'Retape ton identifiant tel quel pour confirmer.');
+    if (c.role === 'admin') this.exigerUnAutreAdmin(c.id);
+    this.effacer(c);
+    this.trace({ acteur: c.id, action: 'compte.supprime', objet: c.id, ip, details: { identifiant: c.identifiant, soi: true } });
+  }
+
+  // Sessions, clés, codes, alertes et facteurs partent avec la ligne du
+  // compte (clés étrangères) ; les jetons et les données du service, ici.
+  effacer(c) {
     this.transaction(() => {
       this.db.prepare('DELETE FROM socle_comptes WHERE id = ?').run(c.id);
       this.db.prepare('DELETE FROM socle_jetons WHERE compte = ?').run(c.id);
       for (const f of this.apresSuppression) f(c.id);
     });
-    this.trace({ acteur: admin.compte, action: 'compte.supprime', objet: c.id, ip, details: { identifiant: c.identifiant } });
   }
 
   // Tout ce que le socle garde d'un compte, sans aucun secret : de quoi
