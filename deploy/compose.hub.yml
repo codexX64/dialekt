@@ -1,4 +1,4 @@
-# Oracle AI installé par le Hub.
+# Oracle installé par le Hub.
 # Les {{...}} sont remplacés à l'installation : secrets générés, port d'hôte,
 # volume nommé et réseau partagé du Hub.
 services:
@@ -11,7 +11,21 @@ services:
       - "{{hostport.http}}:8112"
     volumes:
       - {{volume.data}}:/app/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
+    mem_limit: 768m
+    cpus: 1.0
+    pids_limit: 256
+    # Journaux du conteneur, où part aussi le journal de sécurité : gardés par
+    # le démon Docker, hors de portée du service, cinq fichiers de 10 Mo.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     environment:
       DATA_DIR: /app/data
       # L'IA locale : l'Ollama enregistré dans le Hub.
@@ -25,8 +39,26 @@ services:
       ADVERSAIRE_URL: "{{config.ADVERSAIRE_URL}}"
       ADVERSAIRE_NOM: "{{config.ADVERSAIRE_NOM}}"
       CLAUDE_CODE_OAUTH_TOKEN: "{{config.CLAUDE_CODE_TOKEN}}"
-      ORACLE_HUB_TOKEN: {{config.HUB_TOKEN}}
-      # SYNAPSE, la mémoire du homelab : Oracle y raconte les verdicts de duel,
+      ORACLE_HUB_TOKEN: "{{config.HUB_TOKEN}}"
+      ORACLE_DUELS_JOUR: "{{config.ORACLE_DUELS_JOUR}}"
+      ORACLE_DUELS_MINUTE: "{{config.ORACLE_DUELS_MINUTE}}"
+      # Comptes : clé maîtresse gardée par le Hub, accès HTTPS ou mode dégradé,
+      # relais de confiance.
+      SOCLE_CLE: "{{config.SOCLE_CLE}}"
+      SOCLE_CLE_ANCIENNE: "{{config.SOCLE_CLE_ANCIENNE}}"
+      SOCLE_HTTP: "{{config.SOCLE_HTTP}}"
+      SOCLE_JETON_INSTALLATION: "{{config.SOCLE_JETON_INSTALLATION}}"
+      SOCLE_PROXYS: "{{config.SOCLE_PROXYS}}"
+      SOCLE_ORIGINES: "{{config.SOCLE_ORIGINES}}"
+      # Alertes de sécurité par courriel, si un relais est indiqué.
+      SOCLE_URL_PUBLIQUE: "{{config.SOCLE_URL_PUBLIQUE}}"
+      SOCLE_SMTP_HOTE: "{{config.SOCLE_SMTP_HOTE}}"
+      SOCLE_SMTP_PORT: "{{config.SOCLE_SMTP_PORT}}"
+      SOCLE_SMTP_SECURITE: "{{config.SOCLE_SMTP_SECURITE}}"
+      SOCLE_SMTP_UTILISATEUR: "{{config.SOCLE_SMTP_UTILISATEUR}}"
+      SOCLE_SMTP_MOTDEPASSE: "{{config.SOCLE_SMTP_MOTDEPASSE}}"
+      SOCLE_SMTP_DE: "{{config.SOCLE_SMTP_DE}}"
+      # SYNAPSE, la mémoire partagée des services : Oracle y raconte les verdicts de duel,
       # les modèles téléchargés et les pannes d'Ollama — jamais les conversations.
       # Le jeton est un jeton de cerveau dérivé par le Hub, pour ce seul service.
       SYNAPSE_URL: "{{provider.memory.learn.url}}"

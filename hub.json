@@ -3,7 +3,7 @@
   "manifestVersion": 1,
   "id": "oracle",
   "name": "Oracle AI",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "IA locale (Ollama) en duel contre Claude, ChatGPT, Kimi ou un autre : un juge déterministe départage sur des critères mesurables.",
   "icon": "sparkle",
   "repository": "https://github.com/codexX64/OracleAI",
@@ -30,7 +30,7 @@
       "arm64"
     ],
     "resources": {
-      "ramMb": 256,
+      "ramMb": 512,
       "cpu": 0.5,
       "diskMb": 512
     },
@@ -63,7 +63,7 @@
       "label": "Jeton de service",
       "type": "secret",
       "generate": "random:32",
-      "help": "Créé par le Hub à l'installation. Il ouvre l'API d'Oracle au Hub — jamais les comptes."
+      "help": "Créé par le Hub à l'installation. Il ouvre au Hub la santé, le palmarès et le lancement d'un duel — jamais les comptes ni les conversations."
     },
     {
       "key": "OLLAMA_MODEL",
@@ -198,6 +198,139 @@
       "default": "",
       "advanced": true,
       "help": "Vide : tu le choisis dans les réglages d'Oracle, dans la liste que le fournisseur renvoie. Pour Claude, seuls opus, sonnet et haiku passent le garde-fou."
+    },
+    {
+      "key": "SOCLE_HTTP",
+      "label": "Accès sans HTTPS",
+      "type": "select",
+      "default": "0",
+      "required": true,
+      "options": [
+        {
+          "value": "0",
+          "label": "Non — Oracle est servi en HTTPS (Relay ou certificat du Hub)"
+        },
+        {
+          "value": "1",
+          "label": "Oui — réseau de confiance, mode dégradé"
+        }
+      ],
+      "help": "Les clés d'accès n'existent qu'en HTTPS. En mode dégradé, l'administrateur se connecte avec mot de passe et application d'authentification, et Oracle l'affiche partout."
+    },
+    {
+      "key": "SOCLE_CLE",
+      "label": "Clé maîtresse",
+      "type": "secret",
+      "generate": "random:32",
+      "help": "Scelle les secrets des applications d'authentification. Créée par le Hub, gardée dans son coffre, jamais sur le volume d'Oracle."
+    },
+    {
+      "key": "SOCLE_CLE_ANCIENNE",
+      "label": "Clé maîtresse remplacée",
+      "type": "secret",
+      "advanced": true,
+      "help": "Pendant une rotation seulement : colle ici la clé maîtresse actuelle, pose une clé neuve (openssl rand -base64 32) dans « Clé maîtresse », redéploie. Oracle rescelle les secrets au démarrage, personne ne réinscrit son application. Vide ensuite ce champ et redéploie."
+    },
+    {
+      "key": "SOCLE_JETON_INSTALLATION",
+      "label": "Jeton d'installation",
+      "type": "secret",
+      "advanced": true,
+      "help": "Vide : Oracle en tire un au premier démarrage et l'écrit dans ses journaux (bouton Journaux). Il ne sert qu'à créer le premier compte."
+    },
+    {
+      "key": "SOCLE_PROXYS",
+      "label": "Relais de confiance",
+      "type": "string",
+      "default": "",
+      "advanced": true,
+      "help": "Plages (CIDR, séparées par des virgules) des relais inverses autorisés à transmettre l'adresse du client. Vide : aucun, l'adresse vue est celle de la connexion."
+    },
+    {
+      "key": "SOCLE_ORIGINES",
+      "label": "Origines supplémentaires",
+      "type": "string",
+      "default": "",
+      "advanced": true,
+      "help": "Adresses complètes (https://oracle.exemple) acceptées en plus de celle de la page, quand un relais réécrit l'hôte."
+    },
+    {
+      "key": "SOCLE_URL_PUBLIQUE",
+      "label": "Adresse publique d'Oracle",
+      "type": "string",
+      "default": "",
+      "advanced": true,
+      "help": "Ex. https://oracle.exemple. Les liens des courriels d'alerte en partent. Obligatoire avec un relais SMTP."
+    },
+    {
+      "key": "SOCLE_SMTP_HOTE",
+      "label": "Relais SMTP",
+      "type": "string",
+      "default": "",
+      "advanced": true,
+      "help": "Vide : les alertes de sécurité restent visibles dans Oracle, sans courriel."
+    },
+    {
+      "key": "SOCLE_SMTP_PORT",
+      "label": "Port SMTP",
+      "type": "number",
+      "min": 1,
+      "advanced": true,
+      "help": "Vide : 465 en TLS, 587 en STARTTLS."
+    },
+    {
+      "key": "SOCLE_SMTP_SECURITE",
+      "label": "Chiffrement SMTP",
+      "type": "select",
+      "default": "tls",
+      "advanced": true,
+      "options": [
+        {
+          "value": "tls",
+          "label": "TLS dès la connexion (465)"
+        },
+        {
+          "value": "starttls",
+          "label": "STARTTLS exigé (587)"
+        }
+      ]
+    },
+    {
+      "key": "SOCLE_SMTP_UTILISATEUR",
+      "label": "Identifiant SMTP",
+      "type": "string",
+      "default": "",
+      "advanced": true
+    },
+    {
+      "key": "SOCLE_SMTP_MOTDEPASSE",
+      "label": "Mot de passe SMTP",
+      "type": "secret",
+      "advanced": true
+    },
+    {
+      "key": "SOCLE_SMTP_DE",
+      "label": "Adresse d'expédition",
+      "type": "string",
+      "default": "",
+      "advanced": true
+    },
+    {
+      "key": "ORACLE_DUELS_JOUR",
+      "label": "Duels par compte et par jour",
+      "type": "number",
+      "default": 200,
+      "min": 1,
+      "advanced": true,
+      "help": "Plafond de dépense : chaque duel coûte un appel à l'adversaire."
+    },
+    {
+      "key": "ORACLE_DUELS_MINUTE",
+      "label": "Duels par compte et par minute",
+      "type": "number",
+      "default": 6,
+      "min": 1,
+      "advanced": true
     }
   ],
   "api": {
