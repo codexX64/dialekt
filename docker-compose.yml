@@ -1,34 +1,31 @@
-# Oracle AI — conteneur géré par docker-control (tunnel automatique)
-#
-# Claude Code (abo Max) fonctionne dans le conteneur grâce au montage de la
-# session de l'hôte : ~/.claude (identifiants) + ~/.local/share/claude (binaire).
-# Adapte HOST_HOME si ton utilisateur n'est pas "docker".
-
+# Oracle seul, sans le Hub : docker compose up -d --build
+# Les réglages viennent de .env (voir .env.example).
 services:
   oracle:
     build: .
-    image: oracle-ai:latest
+    image: oracle-ai:local
     container_name: oracle-ai
-    ports:
-      - "8112:8112"
-    environment:
-      OLLAMA_URL: "${OLLAMA_URL}"
-      OLLAMA_MODEL: "${OLLAMA_MODEL:-qwen3:14b}"
-      CLAUDE_MODE: "${CLAUDE_MODE:-cli}"
-      CLAUDE_MODEL: "${CLAUDE_MODEL:-claude-opus-4-8}"
-      CLAUDE_BIN: "${CLAUDE_BIN:-claude}"
-      MAX_TOKENS: "${MAX_TOKENS:-1024}"
-      MEMORY_URL: "${MEMORY_URL:-}"
-      MEMORY_API_KEY: "${MEMORY_API_KEY:-}"
-      HOME: "/root"
-      TZ: "${TZ:-Europe/Paris}"
-    volumes:
-      # données persistantes (oracle.db, settings.json, clé de session)
-      - ./data:/app/data
-      # session Claude Code de l'hôte (identifiants Max) — lecture/écriture
-      # car Claude Code rafraîchit son jeton tout seul
-      - ${HOST_HOME:-$HOME}/.claude:/root/.claude
-      - ${HOST_HOME:-$HOME}/.local/share/claude:/root/.local/share/claude
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${ORACLE_PORT:-8112}:8112"
+    volumes:
+      - oracle-data:/app/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 768m
+    cpus: 1.0
+    pids_limit: 256
+    # Journaux du conteneur, où part aussi le journal de sécurité : gardés par
+    # le démon Docker, hors de portée du service, cinq fichiers de 10 Mo.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  oracle-data:

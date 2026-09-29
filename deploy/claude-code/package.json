@@ -1,0 +1,8 @@
+{
+  "name": "oracle-claude-code",
+  "private": true,
+  "description": "Claude Code, adversaire « claude-code » d'Oracle : version exacte, installée depuis ce verrou.",
+  "dependencies": {
+    "@anthropic-ai/claude-code": "2.1.284"
+  }
+}
