@@ -1,0 +1,6 @@
+katex-0.18.7.min.js
+  source    : paquet npm katex@0.18.7, fichier dist/katex.min.js (licence MIT, voir katex-LICENSE)
+  paquet    : sha512-h+UCwkZ+4Jz8WQ7MLGfj7UVFrRCizGb912fwF4luGdYsC5paYG1vx+jy+KRcC/XkpjGva/P7nAWuxNnPzRvzHw==
+  fichier   : sha256 10a91b479cd927446ceb60409fb0d72b5d0d05eaf446c9e52fafd64058c84540
+  usage     : rendu MathML des formules, chargé seulement quand une réponse en contient
+  options   : trust false, strict ignore, sortie mathml (aucun style en ligne, aucune police)
