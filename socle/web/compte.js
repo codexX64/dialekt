@@ -278,22 +278,29 @@ function jauge(input) {
 }
 
 export function basculeTheme() {
-  const b = h('button', { class: 'ghost', type: 'button', title: 'Clair ou sombre', 'aria-label': 'Changer de thème' });
-  const peint = () => {
-    const sombre = document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
-    b.replaceChildren(icone(sombre ? 'soleil' : 'lune'));
-  };
+  const b = h('button', { class: 'ghost bascule-theme', type: 'button', title: 'Clair ou sombre', 'aria-label': 'Changer de thème' });
+  const peint = () => b.replaceChildren(icone(estSombre() ? 'soleil' : 'lune'));
   b.addEventListener('click', () => {
-    const sombre = document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
-    document.documentElement.dataset.theme = sombre ? 'light' : 'dark';
+    document.documentElement.dataset.theme = estSombre() ? 'light' : 'dark';
     try { localStorage.setItem('theme', document.documentElement.dataset.theme); } catch { /* stockage indisponible */ }
+    appliquerTheme();
     peint();
   });
   peint();
   return b;
 }
+// Sombre ou clair : le choix posé l'emporte ; sans choix, la gamme Console
+// est sombre et SOMA suit le système.
+export function estSombre() {
+  const d = document.documentElement.dataset;
+  return d.theme ? d.theme === 'dark' : d.gamme === 'console' || matchMedia('(prefers-color-scheme: dark)').matches;
+}
 export function appliquerTheme() {
   try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch { /* rien */ }
+  // En gamme Console, la barre du navigateur mobile suit le fond de la page.
+  if (document.documentElement.dataset.gamme === 'console') {
+    for (const m of document.querySelectorAll('meta[name="theme-color"]')) m.content = estSombre() ? '#000000' : '#F7F7F8';
+  }
 }
 
 // Promesse résolue quand la session est complète : le service peut alors
@@ -304,7 +311,6 @@ export function porte({ api, service, marque = null, sousTitre = '' }) {
     const racine = h('div', { class: 'porte' }, h('div', { class: 'halos', 'aria-hidden': 'true' }, h('i'), h('i')), wiz,
       h('div', { class: 'credit', text: `${service} · Codex64` }));
     document.body.append(racine);
-    let enInscription = false;
 
     const entete = (etapes = 0, courante = 0) => h('div', { class: 'whead' },
       h('div', { class: 'brand' }, h('div', { class: 'g' }, marque ? marque.cloneNode(true) : icone('bouclier', 18)),
@@ -334,7 +340,7 @@ export function porte({ api, service, marque = null, sousTitre = '' }) {
       if (jeton && (!e.session || e.session.niveau === 'partiel')) return ecranJeton(e, jeton[1], jeton[2]);
       if (!e.session) return connexion(e);
       if (e.session.niveau === 'partiel') return second(e);
-      if (e.session.niveau === 'inscription') { enInscription = true; return inscription(e); }
+      if (e.session.niveau === 'inscription') return inscription(e);
       if (e.session.compte.facteurs.secours === 0) return codesSecours(e);
       racine.remove();
       resolve(e);
@@ -354,6 +360,18 @@ export function porte({ api, service, marque = null, sousTitre = '' }) {
           suite();
         });
       } }, jeton.noeud, ident.noeud, mdp.noeud, jauge(mdp.input), err, h('div', { class: 'wfoot' }, go));
+      if (e.parHub) {
+        // Installé par le Hub : aucun jeton à recopier, le compte naît d'un lien.
+        const verifier = h('button', { class: 'next', type: 'button', onclick: () => occupe(verifier, err, async () => suite()) }, 'J’ai ouvert le lien', icone('fleche'));
+        ecran({ etapes: 3, courante: 0, titre: 'Premier compte', sous: `${service} a été installé par le Hub : c’est lui qui crée ton compte.`, corps: [
+          h('ol', { class: 'etapes-hub' },
+            h('li', { text: 'Dans le Hub : Comptes services, ouvre ce service, puis « Créer l’administrateur ».' }),
+            h('li', { text: 'Ouvre le lien que le Hub affiche : tu choisis ton mot de passe, puis tes facteurs de connexion.' })),
+          err,
+          h('details', { class: 'sans-hub' }, h('summary', { text: 'Sans le Hub : jeton d’installation' }), form)],
+          pied: [verifier] });
+        return;
+      }
       ecran({ etapes: 3, courante: 0, titre: 'Premier compte', sous: `Ce compte administre ${service}. Les facteurs de connexion viennent juste après.`, corps: [bandeauContexte(e), form] });
       wiz.lastElementChild.remove();
     }
@@ -756,7 +774,7 @@ export function pageComptes(api, { service }) {
         h('tbody', {}, liste.comptes.map(c => h('tr', {},
           h('td', { class: 'principal' }, h('div', { class: 'who-cell' }, h('div', { class: 'itile' + (c.role === 'admin' ? ' key' : '') }, icone(c.role === 'admin' ? 'bouclier' : 'utilisateurs')),
             h('div', {}, h('b', { text: c.affichage }), h('small', { text: `${c.identifiant} · ${c.role}${c.actif ? '' : ' · désactivé'}` })))),
-          h('td', { class: 'cache-m' }, h('span', { class: 'dim', text: facteursTxt(c) }), c.manquants.length ? h('span', { class: 'chip o', text: 'inscription incomplète' }) : null),
+          h('td', { class: 'cache-m' }, h('span', { class: 'dim une-ligne', text: facteursTxt(c) }), c.manquants.length ? h('span', { class: 'chip o', text: 'inscription incomplète' }) : null),
           h('td', { class: 'cache-l mono', text: depuis(c.derniere) }),
           h('td', { class: 'fin' }, h('div', { class: 'actions' },
             action('Rôle', 'flat', () => changerRole(api, c)),

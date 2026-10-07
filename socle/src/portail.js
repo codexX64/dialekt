@@ -7,9 +7,10 @@
 //   portail.exiger(ctx, { role: 'admin' });   // avant chaque route protégée
 import { Debit, adresseClient, estSecurise, hoteLocal, lireCookies, lireCorps, origineDe, poseCookie, repondreJson } from './http.js';
 import { valider } from './schema.js';
-import { ErreurHttp, aleatoire, sha256hex } from './outils.js';
+import { ErreurHttp, aleatoire, egal, sha256hex } from './outils.js';
 import { ROLES, NIVEAUX } from './comptes.js';
-import { messageVerification } from './notifications.js';
+import { messageVerification, messageLien } from './notifications.js';
+import { adresseValide } from './courriel.js';
 
 const METHODES_SURES = new Set(['GET', 'HEAD', 'OPTIONS']);
 const RANG = { lecture: 0, membre: 1, admin: 2 };
@@ -25,7 +26,7 @@ const S = {
 };
 
 export class Portail {
-  constructor({ comptes, service, proxys, origines = [], jetonInstallation = null, journal = console, courriel = null, urlPublique = null, contactSecurite = null }) {
+  constructor({ comptes, service, proxys, origines = [], jetonInstallation = null, journal = console, courriel = null, urlPublique = null, contactSecurite = null, jetonAdminHub = null }) {
     this.comptes = comptes;
     this.courriel = courriel; // { postier }, ou null sans relais SMTP
     this.urlPublique = urlPublique;
@@ -39,6 +40,11 @@ export class Portail {
     this.originesEnPlus = origines;
     this.jetonEnv = jetonInstallation;
     this.log = journal;
+    // Administration des comptes déléguée au Hub (SOCLE_JETON_ADMIN_HUB) : un
+    // jeton à lui seul, distinct de celui du service, et un débit qui borne
+    // les essais.
+    this.jetonAdminHub = jetonAdminHub;
+    this.essaisHub = new Debit({ max: 60 });
   }
 
   nomCookie(ctx, quoi) { return `${ctx.securise ? '__Host-' : ''}${this.service.id}-${quoi}`; }
@@ -60,6 +66,8 @@ export class Portail {
     const ctx = { req, res, ip, securise, sur, origine, rpId, cookies, appareil: appareilDe(req.headers['user-agent']) };
     ctx.jeton = cookies[this.nomCookie(ctx, 'sid')] || null;
     ctx.session = this.comptes.session(ctx.jeton);
+    // Le domaine vu par le navigateur : il dit quelles clés d'accès s'ouvrent ici.
+    if (ctx.session && sur) ctx.session.rp = rpId;
     return ctx;
   }
 
@@ -120,6 +128,8 @@ export class Portail {
     return {
       service: this.service.nom, installe: c.estInstalle(), securise: ctx.securise, cles: ctx.sur && !c.modeHttp,
       modeHttp: c.modeHttp, politique,
+      // Installé par le Hub : le premier compte se crée depuis le Hub.
+      ...(this.jetonAdminHub && !c.estInstalle() ? { parHub: true } : {}),
       session: s ? {
         niveau: s.niveau, csrf: s.csrf, facteursUtilises: s.facteurs,
         compte: s.niveau === 'partiel' ? { identifiant: s.compteLigne.identifiant } : c.publicDe(s.compteLigne),
@@ -154,6 +164,7 @@ export class Portail {
   async corps(ctx, schema) { return valider(await lireCorps(ctx.req, { limite: 32 * 1024 }), schema); }
 
   async router(req, p, ctx) {
+    if (p.startsWith('/api/compte/hub/')) return this.delegue(req, p, ctx);
     const c = this.comptes, m = req.method;
     const ip = ctx.ip, appareil = ctx.appareil;
     const ouvre = s => { this.poserSession(ctx, s); return { ok: true, etape: s.etape, niveau: s.niveau, csrf: s.csrf, ...(s.methodes ? { methodes: s.methodes } : {}), ...(s.codes ? { codes: s.codes } : {}), ...(s.restants !== undefined ? { restants: s.restants } : {}) }; };
@@ -266,7 +277,7 @@ export class Portail {
       if (!s || s.niveau === 'partiel') throw new ErreurHttp(401, 'Connexion requise.');
       return {
         compte: c.publicDe(s.compteLigne), cles: c.clesDe(s.compte), sessions: c.sessionsDe(s.compte, s.id),
-        alertes: c.alertesDe(s.compte), politique: c.politique(), methodesRenfort: c.methodesRenfort(s.compteLigne), envoiCourriel: !!this.courriel,
+        alertes: c.alertesDe(s.compte), politique: c.politique(), methodesRenfort: c.methodesRenfort(s.compteLigne, s.rp), envoiCourriel: !!this.courriel,
         renfortJusqua: c.estRenforcee(s) ? s.renfort + 5 * 60e3 : 0, clesPossibles: ctx.sur && !c.modeHttp, modeHttp: c.modeHttp,
       };
     }
@@ -334,6 +345,94 @@ export class Portail {
     // --- administration ---
     if (p.startsWith('/api/compte/admin/')) return this.admin(req, p, ctx);
     return undefined;
+  }
+
+  /*
+   * Administration des comptes par le Hub. Le Hub présente son jeton
+   * d'administration (jamais celui du service) ; il a lui-même exigé le
+   * renfort de son opérateur avant d'entrer ici, et le dit dans X-Hub-Operateur,
+   * repris au journal. Rien ici ne pose ni ne lit de mot de passe : le Hub
+   * reçoit des liens d'invitation et de réinitialisation, et la personne
+   * choisit elle-même son mot de passe et ses facteurs.
+   */
+  async delegue(req, p, ctx) {
+    const c = this.comptes, m = req.method, ip = ctx.ip;
+    if (!this.jetonAdminHub) throw new ErreurHttp(404, 'Route inconnue.');
+    const refuser = cause => {
+      c.journal.rare(`hub:${ip}`, { action: 'connexion.jeton_hub', objet: p, ip, resultat: 'refus', details: { cause } });
+      throw new ErreurHttp(401, 'Jeton refusé.');
+    };
+    if (!this.essaisHub.prendre(ip)) throw new ErreurHttp(429, 'Trop de requêtes.');
+    const m1 = /^Bearer (\S{32,512})$/.exec(String(req.headers.authorization || ''));
+    if (!m1) refuser('forme');
+    if (!egal(m1[1], this.jetonAdminHub)) refuser('inconnu');
+    const operateur = String(req.headers['x-hub-operateur'] || '').replace(/[^\p{L}\p{N}_.@ -]/gu, '').slice(0, 64) || null;
+    const hub = { compte: 'hub', delegue: true, operateur };
+    // L'adresse des liens est connue avant d'agir : sans elle, rien n'est créé.
+    const base = () => this.urlPublique || this.lienDelegue(req);
+    const tracer = (action, objet, details = {}) => c.trace({ acteur: 'hub', action, objet, ip, details: { ...details, ...(operateur ? { operateur } : {}) } });
+    // a2f : un second facteur au moins (application ou clé), lu d'un coup d'œil dans le Hub.
+    // Un lien par courriel : il part vers l'adresse du compte, jamais ailleurs,
+    // et n'est pas rendu au Hub (il n'existe qu'une fois, dans la boîte).
+    const envoyerLien = async (compte, usage, jeton, expire) => {
+      if (!this.courriel) throw new ErreurHttp(409, 'Aucun relais d’envoi configuré pour ce service (SOCLE_SMTP_*) : copie le lien à la place.');
+      if (!compte.courriel) throw new ErreurHttp(409, 'Ce compte n’a pas d’adresse e-mail.');
+      const m = messageLien({ service: this.service, compte, usage, lien: `${base()}/#${usage}=${jeton}`, heures: Math.max(1, Math.round((expire - Date.now()) / 3600e3)) });
+      try { await this.courriel.postier.envoyer({ a: compte.courriel, ...m }); } catch (e) {
+        throw new ErreurHttp(502, `Envoi impossible : ${String(e.message).slice(0, 200)}`);
+      }
+      return { envoye: true, a: compte.courriel, expire };
+    };
+    if (m === 'GET' && p === '/api/compte/hub/comptes') return c.lister().map(x => ({ ...x, a2f: !!(x.facteurs.totp || x.facteurs.cles) }));
+    if (m === 'POST' && p === '/api/compte/hub/comptes') {
+      const b = await this.corps(ctx, { identifiant: S.identifiant, affichage: { type: 'chaine', max: 80 }, role: { type: 'chaine', parmi: ['membre', 'lecture', 'admin'], defaut: 'membre' }, courriel: { type: 'chaine', max: 254 }, envoyer: { type: 'booleen', defaut: false } });
+      if (b.courriel && !adresseValide(b.courriel)) throw new ErreurHttp(400, 'Adresse de courriel invalide.');
+      if (b.envoyer && !b.courriel) throw new ErreurHttp(400, 'Une adresse e-mail est nécessaire pour envoyer le lien.');
+      if (b.envoyer && !this.courriel) throw new ErreurHttp(409, 'Aucun relais d’envoi configuré pour ce service (SOCLE_SMTP_*) : copie le lien à la place.');
+      const adresse = base();
+      // Administrateur : seulement le tout premier compte d'un service vide.
+      const r = b.role === 'admin' ? c.premierAdmin(hub, b, { ip }) : c.inviter(hub, b, { ip });
+      if (b.courriel) c.definirCourriel(hub, r.compte.id, b.courriel, { ip });
+      tracer('hub.compte_invite', r.compte.id, { role: b.role, envoye: b.envoyer });
+      const compte = c.publicDe(c.compte(r.compte.id));
+      if (b.envoyer) return { compte, ...(await envoyerLien(compte, 'invitation', r.jeton, r.expire)), message: `Invitation envoyée à ${compte.courriel}.` };
+      return { compte, lien: `${adresse}/#invitation=${r.jeton}`, expire: r.expire, message: `Lien d’invitation à transmettre à ${compte.identifiant} : il choisit lui-même son mot de passe et ses facteurs.` };
+    }
+    const mm = /^\/api\/compte\/hub\/comptes\/(c_[\w-]{16})(\/reinit)?$/.exec(p);
+    if (mm && !mm[2] && m === 'PATCH') {
+      const b = await this.corps(ctx, { role: { type: 'chaine', parmi: ROLES }, actif: { type: 'booleen' }, courriel: { type: 'chaine', max: 254 }, retirerCourriel: { type: 'booleen' }, cleExigee: { type: 'booleen' } });
+      if (b.retirerCourriel) b.courriel = '';
+      if (b.role) c.changerRole(hub, mm[1], b.role, { ip });
+      if (b.actif !== undefined) c.desactiver(hub, mm[1], b.actif, { ip });
+      if (b.courriel !== undefined) c.definirCourriel(hub, mm[1], b.courriel.trim(), { ip });
+      if (b.cleExigee !== undefined) c.exigerCle(hub, mm[1], b.cleExigee, { ip });
+      tracer('hub.compte_modifie', mm[1], b);
+      return { ok: true };
+    }
+    if (mm && !mm[2] && m === 'DELETE') { c.supprimer(hub, mm[1], { ip }); tracer('hub.compte_supprime', mm[1]); return { ok: true }; }
+    if (mm && mm[2] && m === 'POST') {
+      const b = await this.corps(ctx, { envoyer: { type: 'booleen', defaut: false } });
+      const adresse = base();
+      const cible = c.compte(mm[1]);
+      if (b.envoyer && cible && !(cible.courriel && cible.courriel_verifie)) throw new ErreurHttp(409, 'Ce compte n’a pas d’adresse e-mail.');
+      if (b.envoyer && !this.courriel) throw new ErreurHttp(409, 'Aucun relais d’envoi configuré pour ce service (SOCLE_SMTP_*) : copie le lien à la place.');
+      const r = c.reinitialiser(hub, mm[1], { ip });
+      tracer('hub.compte_reinit', mm[1], { envoye: b.envoyer });
+      if (b.envoyer) return { ...(await envoyerLien(c.publicDe(c.compte(mm[1])), 'reinit', r.jeton, r.expire)), message: `Lien envoyé à ${c.compte(mm[1]).courriel}.` };
+      return { lien: `${adresse}/#reinit=${r.jeton}`, expire: r.expire, message: 'Lien de réinitialisation à transmettre : il ne rend que le mot de passe, les autres facteurs restent exigés.' };
+    }
+    throw new ErreurHttp(404, 'Route inconnue.');
+  }
+
+  // Sans adresse publique configurée, le Hub dit à quelle adresse il ouvre le
+  // service (X-Hub-Adresse) : c'est elle qui part dans les liens.
+  lienDelegue(req) {
+    const a = String(req.headers['x-hub-adresse'] || '');
+    try {
+      const u = new URL(a);
+      if ((u.protocol === 'https:' || u.protocol === 'http:') && !u.username && !u.password) return u.origin;
+    } catch { /* adresse absente ou invalide */ }
+    throw new ErreurHttp(409, 'Adresse publique du service inconnue : pose SOCLE_URL_PUBLIQUE, ou ouvre le service une fois depuis le Hub.');
   }
 
   async admin(req, p, ctx) {

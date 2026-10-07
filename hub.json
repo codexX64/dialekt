@@ -232,11 +232,19 @@
       "help": "Pendant une rotation seulement : colle ici la clé maîtresse actuelle, pose une clé neuve (openssl rand -base64 32) dans « Clé maîtresse », redéploie. Oracle rescelle les secrets au démarrage, personne ne réinscrit son application. Vide ensuite ce champ et redéploie."
     },
     {
+      "key": "HUB_ADMIN_TOKEN",
+      "label": "Jeton d'administration des comptes",
+      "type": "secret",
+      "generate": "random:48",
+      "advanced": true,
+      "help": "Généré par le Hub : il ne sert qu'à gérer les comptes d'Oracle depuis Comptes des services — créer un compte et envoyer son lien de création, sans jamais voir ni mot de passe ni facteur."
+    },
+    {
       "key": "SOCLE_JETON_INSTALLATION",
       "label": "Jeton d'installation",
       "type": "secret",
       "advanced": true,
-      "help": "Vide : Oracle en tire un au premier démarrage et l'écrit dans ses journaux (bouton Journaux). Il ne sert qu'à créer le premier compte."
+      "help": "Vide : Oracle en tire un au premier démarrage. Le premier compte se crée par le lien que donne le Hub (Comptes des services), jamais par une page ouverte à tous."
     },
     {
       "key": "SOCLE_PROXYS",
@@ -512,5 +520,51 @@
   "ai": {
     "exposeActions": true,
     "hints": "Oracle départage une IA locale et un adversaire (Claude, ChatGPT, Kimi, Mistral…) avec un juge déterministe — jamais un LLM. « Palmarès des duels » pour les chiffres ; un duel coûte un appel à l'adversaire, donc n'en lance pas en boucle. Les conversations restent privées : Oracle ne raconte à SYNAPSE (si installé) que les verdicts de duel, les modèles téléchargés et les pannes d'Ollama."
+  },
+  "accounts": {
+    "tokenKey": "HUB_ADMIN_TOKEN",
+    "roles": [
+      "admin",
+      "membre",
+      "lecture"
+    ],
+    "adminRole": "admin",
+    "invitation": true,
+    "fields": {
+      "id": "$.id",
+      "name": "$.identifiant",
+      "role": "$.role",
+      "mfa": "$.a2f",
+      "created": "$.cree",
+      "lastSeen": "$.derniere"
+    },
+    "list": {
+      "method": "GET",
+      "path": "/api/compte/hub/comptes"
+    },
+    "create": {
+      "method": "POST",
+      "path": "/api/compte/hub/comptes",
+      "body": {
+        "identifiant": "{{params.username}}",
+        "role": "{{params.role}}"
+      }
+    },
+    "update": {
+      "method": "PATCH",
+      "path": "/api/compte/hub/comptes/{{params.id}}",
+      "body": {
+        "role": "{{params.role}}"
+      }
+    },
+    "reset": {
+      "method": "POST",
+      "path": "/api/compte/hub/comptes/{{params.id}}/reinit",
+      "body": {}
+    },
+    "remove": {
+      "method": "DELETE",
+      "path": "/api/compte/hub/comptes/{{params.id}}"
+    }
   }
 }

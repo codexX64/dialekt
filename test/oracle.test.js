@@ -350,3 +350,16 @@ test('API Anthropic : clé en en-tête, flux lu, max_tokens plafonné', async ()
     assert.equal(anth.recu[0].max, 512);
   } finally { await anth.fermer(); }
 });
+
+test('installé par le Hub : le premier compte passe par le lien du Hub, jamais par une page ouverte à tous', () => {
+  const m = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, '../hub.json'), 'utf8'));
+  const compose = fs.readFileSync(path.join(import.meta.dirname, '../deploy/compose.hub.yml'), 'utf8');
+  const champ = cle => m.config.find(c => c.key === cle);
+  assert.equal(m.accounts?.tokenKey, 'HUB_ADMIN_TOKEN', 'comptes gérés depuis Comptes des services');
+  assert.equal(m.accounts.invitation, true, 'un lien de création, pas un mot de passe tapé par le Hub');
+  assert.equal(champ('HUB_ADMIN_TOKEN').type, 'secret');
+  assert.match(champ('HUB_ADMIN_TOKEN').generate, /^random:(4[8-9]|[5-9]\d)$/, 'tiré par le Hub, assez long');
+  assert.equal(champ('SOCLE_JETON_INSTALLATION').type, 'secret');
+  assert.match(compose, /SOCLE_JETON_ADMIN_HUB: "\{\{config\.HUB_ADMIN_TOKEN\}\}"/);
+  assert.match(compose, /SOCLE_JETON_INSTALLATION: "\{\{config\.SOCLE_JETON_INSTALLATION\}\}"/);
+});

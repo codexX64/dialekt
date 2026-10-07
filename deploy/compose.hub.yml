@@ -48,6 +48,7 @@ services:
       SOCLE_CLE_ANCIENNE: "{{config.SOCLE_CLE_ANCIENNE}}"
       SOCLE_HTTP: "{{config.SOCLE_HTTP}}"
       SOCLE_JETON_INSTALLATION: "{{config.SOCLE_JETON_INSTALLATION}}"
+      SOCLE_JETON_ADMIN_HUB: "{{config.HUB_ADMIN_TOKEN}}"
       SOCLE_PROXYS: "{{config.SOCLE_PROXYS}}"
       SOCLE_ORIGINES: "{{config.SOCLE_ORIGINES}}"
       # Alertes de sécurité par courriel, si un relais est indiqué.

@@ -75,7 +75,7 @@ export function politiqueContenu({ nonce, connect = [], img = [], media = [], fr
   ].join('; ');
 }
 
-export function entetesSecurite(res, { secure, csp, permissions = 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), bluetooth=(), hid=(), midi=(), magnetometer=(), gyroscope=(), accelerometer=(), display-capture=()' } = {}) {
+export function entetesSecurite(res, { secure, csp, hote, permissions = 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), midi=(), magnetometer=(), gyroscope=(), accelerometer=(), display-capture=()' } = {}) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('X-Frame-Options', 'DENY');
@@ -83,7 +83,9 @@ export function entetesSecurite(res, { secure, csp, permissions = 'camera=(), mi
   res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
   res.setHeader('Permissions-Policy', permissions);
   if (csp) res.setHeader('Content-Security-Policy', csp);
-  if (secure) res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
+  // Pas pour localhost (un tunnel SSH) : la règle s'appliquerait à tout ce que
+  // la machine sert en local, sur tous ses ports.
+  if (secure && !hoteLocal(hote)) res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
 }
 
 // ---- cookies ----
@@ -172,8 +174,12 @@ const TYPES = {
   '.ico': 'image/x-icon', '.json': 'application/json; charset=utf-8', '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8',
 };
 
+// Les gammes de SOMA. Une page HTML qui porte data-gamme="__GAMME__" la reçoit
+// rendue côté serveur : aucun éclair d'une gamme à l'autre au chargement.
+export const GAMMES = ['soma', 'console'];
+
 // Renvoie false si le fichier n'existe pas (l'appelant décide du 404).
-export function servirFichier(req, res, racine, chemin, { nonce, cache = 'no-cache' } = {}) {
+export function servirFichier(req, res, racine, chemin, { nonce, gamme = 'soma', cache = 'no-cache' } = {}) {
   let rel;
   try { rel = decodeURIComponent(chemin); } catch { return false; }
   if (rel.includes('\0')) return false;
@@ -187,7 +193,7 @@ export function servirFichier(req, res, racine, chemin, { nonce, cache = 'no-cac
   const type = TYPES[ext];
   if (!type) return false;
   if (ext === '.html') {
-    const html = fs.readFileSync(plein, 'utf8').replaceAll('__NONCE__', nonce || '');
+    const html = fs.readFileSync(plein, 'utf8').replaceAll('__NONCE__', nonce || '').replaceAll('__GAMME__', GAMMES.includes(gamme) ? gamme : 'soma');
     res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-store', 'Content-Length': Buffer.byteLength(html) });
     res.end(req.method === 'HEAD' ? undefined : html);
     return true;
