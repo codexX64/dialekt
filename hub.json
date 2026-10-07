@@ -3,12 +3,12 @@
   "manifestVersion": 1,
   "id": "oracle",
   "name": "Oracle AI",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "IA locale (Ollama) en duel contre Claude, ChatGPT, Kimi ou un autre : un juge déterministe départage sur des critères mesurables.",
   "icon": "sparkle",
   "repository": "https://github.com/codexX64/OracleAI",
   "license": "MIT",
-  "minHubVersion": "0.5.64",
+  "minHubVersion": "0.9.0",
   "install": {
     "type": "compose",
     "compose": "deploy/compose.hub.yml",
@@ -54,7 +54,7 @@
       "key": "IMAGE_TAG",
       "label": "Version de l'image",
       "type": "string",
-      "default": "latest",
+      "default": "2.1.0",
       "advanced": true,
       "help": "Étiquette de l'image publiée sur ghcr.io."
     },
