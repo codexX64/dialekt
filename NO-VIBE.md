@@ -1,4 +1,4 @@
-# Code quality record — Oracle
+# Code quality record — DIALEKT
 
 Method: Project Baseline Requirements & Security Manual, Part III (chapters 37-49)
 Reviewed: 2026-09-29   ·   Owner: Codex64
@@ -20,13 +20,13 @@ existantes attendent :
 - **Données** : `oracle.db` et `settings.json` de la version 1 relus sans
   conversion (essai « migration »).
 
-Ensemble de référence : 22 essais d'Oracle et 37 du socle, tous au vert,
+Ensemble de référence : 22 essais de DIALEKT et 37 du socle, tous au vert,
 identiques avant et après la relecture. Depuis : socle ré-embarqué (rotation
 de la clé maîtresse et du poivre, 50 essais), paramètres Argon2id de
-production dans les essais d'Oracle, un essai sur les fichiers cachés, puis
+production dans les essais de DIALEKT, un essai sur les fichiers cachés, puis
 le socle df0b6be (effacement de son propre compte, refus anti-CSRF
 journalisés, sauvegarde chiffrée) et l'essai d'effacement en libre-service :
-24 essais d'Oracle et 52 du socle, tous au vert. Parcours Chromium : 57 écrans ×
+24 essais de DIALEKT et 52 du socle, tous au vert. Parcours Chromium : 57 écrans ×
 largeurs, 0 défaut de mise en page, 0 erreur de console.
 
 Changements de comportement voulus, chacun étant le correctif :
@@ -119,7 +119,7 @@ Commandes de l'annexe B.5, sur `src web test outils socle deploy Dockerfile .git
 | `npx depcheck` | sans objet : aucune dépendance |
 
 ## Verification (chapter 49)
-- [x] Full suite passes and matches the baseline — 22 essais d'Oracle et 37 du socle à la relecture ; 24 et 52 aujourd'hui, tous verts
+- [x] Full suite passes and matches the baseline — 22 essais de DIALEKT et 37 du socle à la relecture ; 24 et 52 aujourd'hui, tous verts
 - [x] Public API diff empty — contrat du Hub épinglé par l'essai « le jeton du Hub n'ouvre que duel, chiffres et état »
 - [x] Characterisation tests deleted after use — aucun essai temporaire ; les vecteurs du juge restent, volontairement
 - [x] Read-aloud test passed — chaque commentaire restant dit pourquoi ou prévient d'une contrainte
