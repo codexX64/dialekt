@@ -8,7 +8,16 @@
   "icon": "sparkle",
   "repository": "https://github.com/codexX64/dialekt",
   "license": "MIT",
-  "minHubVersion": "0.9.0",
+  "minHubVersion": "0.13.0",
+  "replaces": [
+    {
+      "id": "oracle",
+      "config": {
+        "ORACLE_DUELS_JOUR": "DIALEKT_DUELS_JOUR",
+        "ORACLE_DUELS_MINUTE": "DIALEKT_DUELS_MINUTE"
+      }
+    }
+  ],
   "install": {
     "type": "compose",
     "compose": "deploy/compose.hub.yml",

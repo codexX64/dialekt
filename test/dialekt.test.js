@@ -366,6 +366,19 @@ test('installé par le Hub : le premier compte passe par le lien du Hub, jamais 
   assert.match(compose, /SOCLE_JETON_INSTALLATION: "\{\{config\.SOCLE_JETON_INSTALLATION\}\}"/);
 });
 
+test('installé par le Hub sous l’ancien nom : proposé en mise à jour, chaque réglage renommé retrouve sa clé', () => {
+  const m = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, '../hub.json'), 'utf8'));
+  const [r] = m.replaces;
+  assert.equal(r.id, 'oracle');
+  const cles = new Set(m.config.map(c => c.key));
+  for (const [de, vers] of Object.entries(r.config)) {
+    assert.ok(cles.has(vers), `${de} → ${vers} : clé déclarée`);
+    assert.ok(!cles.has(de), `${de} n'existe plus`);
+  }
+  assert.deepEqual(Object.keys(r.config).sort(), ['ORACLE_DUELS_JOUR', 'ORACLE_DUELS_MINUTE']);
+  assert.equal(m.minHubVersion, '0.13.0', 'un Hub plus ancien ne connaît pas « replaces »');
+});
+
 test('base : un dossier ou un fichier non inscriptible arrête le démarrage avec sa cause ; base et journaux en 0600', async () => {
   const { ouvrirBase, exigerInscriptible } = await import('../src/base.js');
   const dossier = fs.mkdtempSync(path.join(os.tmpdir(), 'base-droits-'));
