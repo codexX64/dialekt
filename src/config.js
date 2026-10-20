@@ -2,7 +2,7 @@
 // SOCLE_* (comptes, relais, clé maîtresse) sont lues par le socle lui-même.
 import { lireConfig } from '../socle/src/index.js';
 
-export const VERSION = '2.1.0';
+export const VERSION = '2.2.0';
 
 // Le service s'appelait Oracle : un ancien .env (ORACLE_*) vaut encore, le nouveau nom l'emporte.
 function avecAnciensNoms(env) {
