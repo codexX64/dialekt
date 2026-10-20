@@ -21,6 +21,8 @@ Le service s’appelait « Oracle », le nom d’une grande entreprise : il devi
 |---|---|---|---|---|
 | D1 | MEDIUM | REQ-DATA-001, SEC-BE-010 | Incident du 2026-10-20 sur la VM d’essai : le volume de données appartenait encore à root (créé par la 1.x, étape de reprise du README sautée). Le service s’ouvrait, refusait chaque écriture (« readonly database ») et a fini en boucle de redémarrage sans dire pourquoi. Au démarrage, un dossier ou un fichier de base non inscriptible arrête désormais le service avec sa cause et le remède ; base et journaux SQLite forcés en 0600. | 465e2a5 |
 
+2.2.1 : le manifeste déclare remplacer `oracle` (`replaces`, Hub 0.13.0) ; un service installé sous l’ancien nom se met à jour vers DIALEKT au lieu d’une deuxième installation, réglages de duels renommés compris (essai « réglage renommé » de `test/dialekt.test.js`). Le Hub retient ce remplacement seulement depuis le même registre. Une clé d’accès enregistrée sous l’ancien nom de domaine ne vaut pas sous le nouveau (WebAuthn la lie au domaine) : un compte qui n’avait qu’elle repasse par un lien de réinitialisation du Hub.
+
 ## Control status
 | ID | Severity | Status | Evidence | Notes |
 |---|---|---|---|---|
@@ -64,7 +66,7 @@ Le service s’appelait « Oracle », le nom d’une grande entreprise : il devi
 | REQ-CFG-002 | CRITICAL | PASS | clés des fournisseurs lues côté serveur seulement : `src/config.js:26` ; rien de secret dans `web/app.js:8` | le navigateur n’appelle que DIALEKT |
 | REQ-CFG-003 | HIGH | FAIL | VM d’essai et production distinctes (instruction de l’exploitant) | clés séparées par environnement à vérifier et à émettre : action H6 |
 | REQ-CFG-004 | HIGH | PASS | `socle/src/config.js:14` ; ensemble : `socle/src/index.js:71` | essai `test/dialekt.test.js:310` |
-| REQ-CFG-005 | HIGH | PASS | inventaire, émetteur et procédure par secret ci-dessous (« Secrets inventory ») ; SOCLE_CLE se tourne sans réinscription : `socle/src/comptes.js:112`, champ du Hub `hub.json:228` ; exercice de bout en bout : `node outils/exercice-rotation.mjs \| grep -c "^OK "` → 12, sur 12 vérifications (clé tournée sur une instance lancée comme en production, TOTP, clé d’accès et code de secours toujours valables, clé inconnue refusée) | essai du socle `socle/test/rotation.test.js:14` ; les clés des fournisseurs vues pendant le développement restent à brûler : SEC-SECRETS-006, action H5 |
+| REQ-CFG-005 | HIGH | PASS | inventaire, émetteur et procédure par secret ci-dessous (« Secrets inventory ») ; SOCLE_CLE se tourne sans réinscription : `socle/src/comptes.js:112`, champ du Hub `hub.json:237` ; exercice de bout en bout : `node outils/exercice-rotation.mjs \| grep -c "^OK "` → 12, sur 12 vérifications (clé tournée sur une instance lancée comme en production, TOTP, clé d’accès et code de secours toujours valables, clé inconnue refusée) | essai du socle `socle/test/rotation.test.js:14` ; les clés des fournisseurs vues pendant le développement restent à brûler : SEC-SECRETS-006, action H5 |
 | REQ-CI-001 | CRITICAL | FAIL | `.github/workflows/verification.yml:48` | Actions désactivées par la facturation, crochet local et protection de poussée à activer : actions H3, H4 |
 | REQ-CI-002 | HIGH | FAIL | `.github/workflows/verification.yml:109` | bloquant une fois les Actions rétablies et le contrôle requis : action H3 |
 | REQ-CI-003 | HIGH | FAIL | verrou : `deploy/claude-code/package-lock.json:3` ; audit : `.github/workflows/verification.yml:39` ; SBOM : `.github/workflows/publish.yml:88` | aucune dépendance d’exécution ; contrôle requis et alertes à activer : action H3 |
@@ -263,7 +265,7 @@ Le service s’appelait « Oracle », le nom d’une grande entreprise : il devi
 | SEC-LOG-002 | HIGH | PASS | `socle/src/journal.js:10` ; jamais le texte des conversations au journal | essai « ni mot de passe ni secret au journal » |
 | SEC-LOG-003 | MEDIUM | FAIL | sortie standard conservée par Docker, hors de portée du service : `deploy/compose.hub.yml:27` | collecteur central hors hôte : action H11 |
 | SEC-LOG-004 | MEDIUM | PASS | vigie : échecs, refus, limites, erreurs, connexion d’un administrateur (`socle/src/vigie.js:11`) ; refus d’origine et de jeton anti-CSRF journalisés : `socle/src/portail.js:105` ; dépense : `src/api.js:56` | courriel (H2) et alertes de facturation (H6) pour sortir de l’application |
-| SEC-LOG-005 | LOW | FAIL | sonde du Hub sur /healthz toutes les 30 s (`hub.json:471`) | surveillance externe : action H10 |
+| SEC-LOG-005 | LOW | FAIL | sonde du Hub sur /healthz toutes les 30 s (`hub.json:480`) | surveillance externe : action H10 |
 | SEC-LOG-006 | MEDIUM | PASS | runbook ci-dessous |  |
 | SEC-LOG-007 | HIGH | PASS | fermeture globale des sessions : `socle/src/portail.js:475` ; rotation de SOCLE_CLE exercée (`outils/exercice-rotation.mjs:1`) ; l’adversaire, seule fonction payante, se coupe en vidant sa clé dans le Hub puis en redéployant (runbook) |  |
 | SEC-PRIV-001 | MEDIUM | PASS | `web/confidentialite.txt:7` avec durées ; purges automatiques : `socle/src/comptes.js:971` |  |
