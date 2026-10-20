@@ -363,3 +363,20 @@ test('installé par le Hub : le premier compte passe par le lien du Hub, jamais 
   assert.match(compose, /SOCLE_JETON_ADMIN_HUB: "\{\{config\.HUB_ADMIN_TOKEN\}\}"/);
   assert.match(compose, /SOCLE_JETON_INSTALLATION: "\{\{config\.SOCLE_JETON_INSTALLATION\}\}"/);
 });
+
+test('base : un dossier ou un fichier non inscriptible arrête le démarrage avec sa cause ; base et journaux en 0600', async () => {
+  const { ouvrirBase, exigerInscriptible } = await import('../src/base.js');
+  const dossier = fs.mkdtempSync(path.join(os.tmpdir(), 'base-droits-'));
+  fs.writeFileSync(path.join(dossier, 'x.db'), '');
+  assert.throws(() => exigerInscriptible([dossier, path.join(dossier, 'x.db')], f => { if (f.endsWith('x.db')) throw new Error('EACCES'); }), /x\.db n'est pas inscriptible.*chown/);
+  assert.doesNotThrow(() => exigerInscriptible([path.join(dossier, 'absent.db')], () => { throw new Error('jamais appelé'); }), 'un fichier absent ne compte pas');
+  const masque = process.umask(0o022);
+  try {
+    const d = path.join(dossier, 'donnees');
+    const db = ouvrirBase(d);
+    db.exec('CREATE TABLE IF NOT EXISTS t(x); INSERT INTO t VALUES (1);');
+    db.close();
+    for (const f of fs.readdirSync(d)) assert.equal(fs.statSync(path.join(d, f)).mode & 0o777, 0o600, f);
+    assert.equal(fs.statSync(d).mode & 0o777, 0o700);
+  } finally { process.umask(masque); fs.rmSync(dossier, { recursive: true, force: true }); }
+});

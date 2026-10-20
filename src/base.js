@@ -12,9 +12,30 @@ import fs from 'node:fs';
 export const REF = /^[A-Za-z0-9_-]{16}$/;
 const nouvelleRef = () => crypto.randomBytes(12).toString('base64url');
 
+/**
+ * Le dossier et chaque fichier de la base doivent être inscriptibles par
+ * l'utilisateur du service : sinon SQLite ouvre la base, puis refuse chaque
+ * écriture (« readonly database ») et le service tourne en boucle sans dire
+ * pourquoi. On s'arrête au démarrage, avec la cause et le remède.
+ */
+export function exigerInscriptible(chemins, acces = f => fs.accessSync(f, fs.constants.W_OK)) {
+  for (const f of chemins) {
+    if (!fs.existsSync(f)) continue;
+    try { acces(f); } catch {
+      throw new Error(`${f} n'est pas inscriptible par l'utilisateur du service (uid ${process.getuid?.() ?? '?'}) : rends-lui le dossier de données (chown -R) avant de démarrer.`);
+    }
+  }
+}
+
 export function ouvrirBase(dossier) {
   fs.mkdirSync(dossier, { recursive: true, mode: 0o700 });
-  const db = new DatabaseSync(path.join(dossier, 'oracle.db'));
+  const fichier = path.join(dossier, 'oracle.db');
+  const fichiers = [fichier, fichier + '-wal', fichier + '-shm'];
+  exigerInscriptible([dossier, ...fichiers]);
+  // Base et journaux lisibles du seul service, quel que soit le masque du processus.
+  fs.closeSync(fs.openSync(fichier, 'a', 0o600));
+  for (const f of fichiers) if (fs.existsSync(f)) fs.chmodSync(f, 0o600);
+  const db = new DatabaseSync(fichier);
   db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;');
   db.exec(`
     CREATE TABLE IF NOT EXISTS conversations(id INTEGER PRIMARY KEY AUTOINCREMENT, ts REAL, title TEXT, mode TEXT);
