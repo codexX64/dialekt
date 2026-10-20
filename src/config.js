@@ -1,10 +1,21 @@
-// Configuration d'Oracle, lue et validée une fois au démarrage. Les variables
+// Configuration de DIALEKT, lue et validée une fois au démarrage. Les variables
 // SOCLE_* (comptes, relais, clé maîtresse) sont lues par le socle lui-même.
 import { lireConfig } from '../socle/src/index.js';
 
 export const VERSION = '2.1.0';
 
-export function lireConfigOracle(env = process.env) {
+// Le service s'appelait Oracle : un ancien .env (ORACLE_*) vaut encore, le nouveau nom l'emporte.
+function avecAnciensNoms(env) {
+  const out = { ...env };
+  for (const [k, v] of Object.entries(env)) {
+    const neuf = k.replace(/^ORACLE_/, 'DIALEKT_');
+    if (neuf !== k && out[neuf] === undefined) out[neuf] = v;
+  }
+  return out;
+}
+
+export function lireConfigDialekt(env = process.env) {
+  env = avecAnciensNoms(env);
   return lireConfig({
     port: { env: 'PORT', type: 'entier', min: 0, max: 65535, defaut: 8112 },
     hote: { env: 'HOTE', type: 'chaine', defaut: '0.0.0.0' },
@@ -24,13 +35,13 @@ export function lireConfigOracle(env = process.env) {
     claudeJeton: { env: 'CLAUDE_CODE_OAUTH_TOKEN', type: 'chaine' },
     memoireUrl: { env: 'MEMORY_URL', type: 'url' },
     memoireCle: { env: 'MEMORY_API_KEY', type: 'chaine' },
-    jetonHub: { env: 'ORACLE_HUB_TOKEN', type: 'secret', min: 24 },
+    jetonHub: { env: 'DIALEKT_HUB_TOKEN', type: 'secret', min: 24 },
     synapseUrl: { env: 'SYNAPSE_URL', type: 'url' },
     synapseJeton: { env: 'SYNAPSE_JETON', type: 'chaine' },
-    rechercheWeb: { env: 'ORACLE_RECHERCHE_WEB', type: 'booleen', defaut: true },
+    rechercheWeb: { env: 'DIALEKT_RECHERCHE_WEB', type: 'booleen', defaut: true },
     // Plafonds de dépense (SEC-LLM-002) : l'adversaire se paie à l'appel.
-    duelsJour: { env: 'ORACLE_DUELS_JOUR', type: 'entier', min: 1, max: 100000, defaut: 200 },
-    duelsMinute: { env: 'ORACLE_DUELS_MINUTE', type: 'entier', min: 1, max: 600, defaut: 6 },
-    jetonsMax: { env: 'ORACLE_JETONS_MAX', type: 'entier', min: 64, max: 32768, defaut: 8192 },
+    duelsJour: { env: 'DIALEKT_DUELS_JOUR', type: 'entier', min: 1, max: 100000, defaut: 200 },
+    duelsMinute: { env: 'DIALEKT_DUELS_MINUTE', type: 'entier', min: 1, max: 600, defaut: 6 },
+    jetonsMax: { env: 'DIALEKT_JETONS_MAX', type: 'entier', min: 64, max: 32768, defaut: 8192 },
   }, env);
 }

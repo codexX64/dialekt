@@ -65,7 +65,7 @@ export async function fauxFournisseur(genre = 'openai', cle = 'cle-essai') {
 export async function fauxSynapse() {
   const evenements = [];
   const f = await serveur((req, res, corps) => {
-    if (req.headers.authorization !== 'Bearer cer_oracle_essai') { res.writeHead(401); res.end('{}'); return; }
+    if (req.headers.authorization !== 'Bearer cer_dialekt_essai') { res.writeHead(401); res.end('{}'); return; }
     evenements.push(...(corps.events || []));
     res.end('{"ok":true}');
   });

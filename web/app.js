@@ -1,11 +1,11 @@
-// Interface d'Oracle : duels en flux, conversations, chiffres, réglages.
+// Interface de DIALEKT : duels en flux, conversations, chiffres, réglages.
 // La porte du socle gère la connexion ; tout ce qui suit suppose une session
 // complète, et le serveur revérifie chaque droit.
 import { Api, porte, pageSecurite, pageComptes, h, icone, basculeTheme, appliquerTheme, toast, confirmer, dialogue, feuille, ajouterPictos } from '/socle/compte.js';
 import { rendre } from '/rendu.js';
 
 appliquerTheme();
-const SERVICE = 'Oracle';
+const SERVICE = 'DIALEKT';
 const api = new Api({ surDeconnexion: () => location.reload() });
 const etat = await porte({ api, service: SERVICE, sousTitre: 'duel d’IA' });
 const moi = etat.session.compte;
@@ -28,7 +28,7 @@ const PICTOS = {
   dossier: '<path d="M3.5 6.5a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/>',
   actions: '<circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/>',
 };
-// Pictogrammes propres à Oracle : des constantes de ce fichier, jamais une donnée.
+// Pictogrammes propres à DIALEKT : des constantes de ce fichier, jamais une donnée.
 ajouterPictos(PICTOS);
 const ic = icone;
 
@@ -460,7 +460,7 @@ async function pageReglages() {
         h('div', { class: 'pad' },
           m.adversaire.manque ? h('div', { class: 'note warn' }, icone('alerte'), h('div', { text: m.adversaire.manque })) : h('div', { class: 'note ok' }, icone('verifie'), h('div', { text: `${m.adversaire.nom} est prêt.` })),
           adverse ? h('div', { class: 'grpf' }, adverse.noeud) : h('p', { class: 'hint', text: 'Le fournisseur n’a pas renvoyé de liste de modèles : le modèle vient de la configuration du Hub.' }),
-          h('p', { class: 'aide', text: 'Le choix du fournisseur et sa clé se règlent dans le Hub. La clé ne quitte jamais le serveur d’Oracle.' })))),
+          h('p', { class: 'aide', text: 'Le choix du fournisseur et sa clé se règlent dans le Hub. La clé ne quitte jamais le serveur de DIALEKT.' })))),
     h('div', { class: 'card' }, h('header', {}, h('h2', { text: 'Télécharger un modèle' }), h('p', { text: 'Directement sur l’Ollama du Hub. Compte plusieurs gigaoctets et quelques minutes.' })), telechargements));
 }
 

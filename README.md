@@ -1,4 +1,4 @@
-# Oracle
+# DIALEKT
 
 Une IA locale (Ollama) en duel contre une IA en ligne — Claude, ChatGPT, Kimi,
 Mistral, DeepSeek, Gemini, Groq, OpenRouter ou toute API compatible OpenAI.
@@ -7,7 +7,7 @@ critères mesurables.
 
 Projet [CodexX64](https://github.com/CodexX64). Licence MIT.
 
-## Ce que fait Oracle
+## Ce que fait DIALEKT
 
 - **Duel** : la même question aux deux modèles, en parallèle et en flux ; le juge
   note substance, richesse, structure, concision et latence, puis désigne un
@@ -16,7 +16,7 @@ Projet [CodexX64](https://github.com/CodexX64). Licence MIT.
 - **Local seul** : le modèle local, sans adversaire ni verdict.
 - **Conversations** privées à chaque compte, recherche, épinglage, projets,
   export Markdown.
-- **Rendu** Markdown, tableaux, blocs de code, formules (KaTeX servi par Oracle,
+- **Rendu** Markdown, tableaux, blocs de code, formules (KaTeX servi par DIALEKT,
   sortie MathML).
 - **Recherche web** activable par message, **pièces jointes** texte.
 - **Modèles** : choix à la volée, téléchargement depuis l'interface.
@@ -24,13 +24,13 @@ Projet [CodexX64](https://github.com/CodexX64). Licence MIT.
 
 ## Comptes et sécurité
 
-Oracle repose sur le socle commun des services : comptes nominatifs, rôles
+DIALEKT repose sur le socle commun des services : comptes nominatifs, rôles
 (`admin`, `membre`, `lecture`), et au moins deux facteurs pour se connecter.
 
 - **Clé d'accès** (Touch ID, Face ID, Windows Hello, clé USB) — exigée pour un
-  administrateur quand Oracle est servi en HTTPS.
+  administrateur quand DIALEKT est servi en HTTPS.
 - **Application d'authentification** (TOTP), configurée par un QR code généré
-  localement, dans le navigateur : le secret ne quitte jamais Oracle.
+  localement, dans le navigateur : le secret ne quitte jamais DIALEKT.
 - **Mot de passe** (Argon2id), selon la politique choisie.
 - **Dix codes de secours** à usage unique.
 
@@ -45,11 +45,11 @@ dans [SECURITY.md](SECURITY.md).
 
 Les clés d'accès n'existent que sur une page HTTPS. Sans HTTPS, `SOCLE_HTTP=1`
 ouvre un mode dégradé, affiché comme tel partout : réservé à un réseau de
-confiance, le temps de servir Oracle en HTTPS.
+confiance, le temps de servir DIALEKT en HTTPS.
 
-**Tourner la clé maîtresse.** Dans le Hub (réglages avancés d'Oracle) ou dans
+**Tourner la clé maîtresse.** Dans le Hub (réglages avancés de DIALEKT) ou dans
 `.env` : la clé actuelle dans `SOCLE_CLE_ANCIENNE`, une neuve
-(`openssl rand -base64 32`) dans `SOCLE_CLE`, puis redémarrer. Oracle rescelle
+(`openssl rand -base64 32`) dans `SOCLE_CLE`, puis redémarrer. DIALEKT rescelle
 chaque secret TOTP en une transaction et le note au journal de sécurité
 (`coffre.tourne`) ; les codes de secours restent valables. Vider ensuite
 `SOCLE_CLE_ANCIENNE` et redémarrer. Une clé que la base ne connaît pas arrête le
@@ -57,11 +57,11 @@ démarrage au lieu de perdre les secrets.
 
 ## Installation par le Hub
 
-Dans le Hub : Extensions → Oracle → Installer. Le Hub génère la clé maîtresse
+Dans le Hub : Extensions → DIALEKT → Installer. Le Hub génère la clé maîtresse
 et le jeton de service, branche l'Ollama déclaré et, si elle est installée, la
 mémoire SYNAPSE.
 
-Au premier démarrage, Oracle écrit son **jeton d'installation** dans ses
+Au premier démarrage, DIALEKT écrit son **jeton d'installation** dans ses
 journaux (bouton Journaux du service). Il ne sert qu'une fois : à créer le
 premier compte administrateur.
 
@@ -70,7 +70,7 @@ premier compte administrateur.
 ```bash
 cp .env.example .env
 docker compose up -d --build
-docker compose logs oracle | grep "Jeton d'installation"
+docker compose logs dialekt | grep "Jeton d'installation"
 ```
 
 Ouvrir ensuite `http://<hôte>:8112`, coller le jeton, créer le compte et son
@@ -81,7 +81,7 @@ installer). Les tests : `npm test`.
 
 ## Mise à jour depuis la version 1
 
-La version 2 reprend `oracle.db` et `settings.json` sans perte :
+La version 2 reprend `oracle.db` (renommée `dialekt.db` au premier démarrage) et `settings.json` sans perte :
 
 - les comptes et leurs mots de passe Argon2id sont repris tels quels ;
 - les secrets TOTP, stockés en clair en version 1, sont scellés ;
@@ -113,16 +113,16 @@ l'image embarque Claude Code, qui s'authentifie par le jeton de
 | `mistral`, `deepseek`, `gemini`, `groq`, `openrouter` | le fournisseur du même nom | `ADVERSAIRE_CLE` |
 | `compatible` | toute API compatible OpenAI | `ADVERSAIRE_URL`, et la clé si elle en demande une |
 
-Sans clé ni jeton pour l'adversaire, Oracle reste utilisable en local seul.
+Sans clé ni jeton pour l'adversaire, DIALEKT reste utilisable en local seul.
 Le modèle de l'adversaire se choisit dans les réglages, dans la liste que le
 fournisseur renvoie lui-même. Pour Claude, seuls Opus, Sonnet et Haiku passent
-le garde-fou. La clé ne quitte jamais le serveur d'Oracle ; Claude Code tourne
+le garde-fou. La clé ne quitte jamais le serveur de DIALEKT ; Claude Code tourne
 sans outil, sans serveur MCP, sans session conservée, dans un dossier vide.
 
 ## Configuration
 
 Chaque variable secrète peut aussi être lue d'un fichier : `NOM_FILE=/chemin`.
-Une valeur invalide arrête Oracle au démarrage avec la liste des erreurs.
+Une valeur invalide arrête DIALEKT au démarrage avec la liste des erreurs.
 
 | Variable | Rôle | Défaut |
 |---|---|---|
@@ -135,14 +135,14 @@ Une valeur invalide arrête Oracle au démarrage avec la liste des erreurs.
 | `CLAUDE_CODE_OAUTH_TOKEN` | jeton de `claude setup-token` | — |
 | `CLAUDE_BIN` | chemin de Claude Code s'il n'est pas dans le `PATH` | `claude` |
 | `CLAUDE_MODE`, `CLAUDE_MODEL`, `ANTHROPIC_API_KEY` | réglages de la version 1, lus si `ADVERSAIRE` est vide | — |
-| `ORACLE_DUELS_JOUR` | duels par compte et par jour | `200` |
-| `ORACLE_DUELS_MINUTE` | duels par compte et par minute | `6` |
-| `ORACLE_JETONS_MAX` | plafond de longueur d'une réponse | `8192` |
-| `ORACLE_RECHERCHE_WEB` | recherche web autorisée | `1` |
-| `ORACLE_HUB_TOKEN` | jeton du Hub : santé, palmarès, lancement d'un duel | — |
+| `DIALEKT_DUELS_JOUR` | duels par compte et par jour | `200` |
+| `DIALEKT_DUELS_MINUTE` | duels par compte et par minute | `6` |
+| `DIALEKT_JETONS_MAX` | plafond de longueur d'une réponse | `8192` |
+| `DIALEKT_RECHERCHE_WEB` | recherche web autorisée | `1` |
+| `DIALEKT_HUB_TOKEN` | jeton du Hub : santé, palmarès, lancement d'un duel | — |
 | `SYNAPSE_URL` / `SYNAPSE_JETON` | mémoire partagée : verdicts, modèles téléchargés, pannes d'Ollama — jamais les conversations | — |
 | `MEMORY_URL` / `MEMORY_API_KEY` | mémoire externe consultée avant de répondre | — |
-| `DATA_DIR` | dossier de `oracle.db` et `settings.json` | `/app/data` |
+| `DATA_DIR` | dossier de `dialekt.db` (`oracle.db` avant le changement de nom, renommée seule) et `settings.json` | `/app/data` |
 | `PORT` / `HOTE` | écoute | `8112` / `0.0.0.0` |
 | `SOCLE_CLE` | clé maîtresse, 32 octets en base64 ; vide : créée dans `DATA_DIR/cles` | — |
 | `SOCLE_CLE_ANCIENNE` | pendant une rotation seulement : la clé remplacée | — |
@@ -162,7 +162,7 @@ Une valeur invalide arrête Oracle au démarrage avec la liste des erreurs.
 
 ## Derrière un relais inverse
 
-Déclarer l'adresse du relais dans `SOCLE_PROXYS` ; sans cela, Oracle ignore
+Déclarer l'adresse du relais dans `SOCLE_PROXYS` ; sans cela, DIALEKT ignore
 `X-Forwarded-For` et `X-Forwarded-Proto`, et limite les tentatives par
 l'adresse du relais. Le relais doit transmettre :
 

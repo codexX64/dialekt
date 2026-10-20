@@ -1,7 +1,7 @@
-// Démarrage d'Oracle : configuration validée, base, socle commun, serveur.
+// Démarrage de DIALEKT : configuration validée, base, socle commun, serveur.
 import http from 'node:http';
 import path from 'node:path';
-import { lireConfigOracle, VERSION } from './config.js';
+import { lireConfigDialekt, VERSION } from './config.js';
 import { ouvrirBase, Conversations } from './base.js';
 import { migrerV1 } from './migration.js';
 import { Ollama } from './ollama.js';
@@ -15,12 +15,12 @@ import { Debit, ErreurHttp, demarrerSocle, entetesSecurite, envelopper, nonceCsp
 const RACINE = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const CONSOLE = { info: (...a) => console.log(...a), warn: (...a) => console.warn(...a), error: (...a) => console.error(...a) };
 // Signalement privé d'une faille, sur le dépôt : lu par le mainteneur.
-const CONTACT_SECURITE = 'https://github.com/codexX64/OracleAI/security/advisories/new';
+const CONTACT_SECURITE = 'https://github.com/codexX64/dialekt/security/advisories/new';
 
 export async function demarrer(env = process.env, { log = CONSOLE } = {}) {
-  const cfg = lireConfigOracle(env);
+  const cfg = lireConfigDialekt(env);
   const db = ouvrirBase(cfg.donnees);
-  const socle = await demarrerSocle({ service: { id: 'oracle', nom: 'Oracle', contactSecurite: CONTACT_SECURITE }, db, dossier: cfg.donnees, env, log });
+  const socle = await demarrerSocle({ service: { id: 'dialekt', nom: 'DIALEKT', contactSecurite: CONTACT_SECURITE }, db, dossier: cfg.donnees, env, log });
   migrerV1({ db, comptes: socle.comptes, coffre: socle.coffre, dossier: cfg.donnees, log });
 
   const synapse = new Synapse({ url: cfg.synapseUrl, jeton: cfg.synapseJeton, log });
@@ -38,7 +38,7 @@ export async function demarrer(env = process.env, { log = CONSOLE } = {}) {
   const debit = new Debit({ max: 600 });
   const serveur = http.createServer(envelopper(async (req, res) => {
     try {
-      const url = new URL(req.url, 'http://oracle');
+      const url = new URL(req.url, 'http://dialekt');
       const ctx = socle.portail.contexte(req, res);
       if (!debit.prendre(ctx.ip)) {
         socle.journal.rare(`debit:${ctx.ip}`, { action: 'limite.atteinte', objet: 'requetes', ip: ctx.ip, resultat: 'refus' });
@@ -62,7 +62,7 @@ export async function demarrer(env = process.env, { log = CONSOLE } = {}) {
   serveur.requestTimeout = 330_000;
   serveur.keepAliveTimeout = 5_000;
   await new Promise(r => serveur.listen(cfg.port, cfg.hote, r));
-  log.info(`Oracle ${VERSION} à l'écoute sur ${cfg.hote}:${cfg.port}`);
+  log.info(`DIALEKT ${VERSION} à l'écoute sur ${cfg.hote}:${cfg.port}`);
   return { serveur, socle, cfg, db, arreter: () => new Promise(r => { socle.arreter(); serveur.close(() => { db.close(); r(); }); }) };
 }
 

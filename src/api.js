@@ -1,4 +1,4 @@
-// Routes d'Oracle. Chaque route dit qui peut l'appeler : session (avec son
+// Routes de DIALEKT. Chaque route dit qui peut l'appeler : session (avec son
 // rôle) ou jeton du Hub, et rien d'autre. Toute donnée d'un compte est lue et
 // écrite avec le compte de la session, jamais avec un identifiant du client.
 import crypto from 'node:crypto';
@@ -144,7 +144,7 @@ export function creerApi({ socle, cfg, conversations, duels, ollama, adversaires
     const changes = Object.fromEntries(['ollama_model', 'claude_model', 'mode'].filter(k => apres[k] !== avant[k]).map(k => [k, apres[k]]));
     if (choix && JSON.stringify(avant.modeles_adversaire || {}) !== JSON.stringify(apres.modeles_adversaire || {})) changes.adversaire = `${f.nom} ${choix}`;
     if (Object.keys(changes).length) {
-      synapse.reglage('Oracle : réglage changé — ' + Object.entries(changes).map(([k, v]) => `${k} → ${v}`).join(', '), changes);
+      synapse.reglage('DIALEKT : réglage changé — ' + Object.entries(changes).map(([k, v]) => `${k} → ${v}`).join(', '), changes);
       socle.journal.ecrire({ acteur: s.compte, action: 'reglages.modifies', ip: ctx.ip, details: changes });
     }
     const { modeles_adversaire, ...pub } = apres;

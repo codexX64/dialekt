@@ -6,7 +6,7 @@ import { h } from '/socle/compte.js';
 
 const lienSur = u => { try { const x = new URL(u); return ['http:', 'https:'].includes(x.protocol) ? x.href : null; } catch { return null; } };
 
-// Une formule s'affiche d'abord en source, puis KaTeX (servi par Oracle, chargé
+// Une formule s'affiche d'abord en source, puis KaTeX (servi par DIALEKT, chargé
 // à la première formule) la remplace par du MathML : ni style en ligne, ni
 // police, ni commande de confiance (\href, \includegraphics…).
 const TEX_MAX = 4000;

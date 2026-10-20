@@ -1,4 +1,4 @@
-// Ce qu'Oracle raconte à SYNAPSE : chaque duel départagé (scores, jamais les
+// Ce que DIALEKT raconte à SYNAPSE : chaque duel départagé (scores, jamais les
 // réponses), un modèle téléchargé, une panne d'Ollama (une fois par panne), un
 // réglage changé (jamais une clé). Sans SYNAPSE_URL ni jeton, rien ne part.
 // Les envois passent par une file bornée vidée en arrière-plan : SYNAPSE lent
@@ -19,7 +19,7 @@ export class Synapse {
 
   raconter(kind, titre, { corps = '', tags = [], meta = null } = {}) {
     if (!this.pret) return;
-    const e = { kind, title: String(titre).slice(0, 300), tags: [...new Set(['oracle', ...tags])].sort(), occurred_at: new Date().toISOString().replace(/\.\d{3}Z$/, '.000Z') };
+    const e = { kind, title: String(titre).slice(0, 300), tags: [...new Set(['dialekt', ...tags])].sort(), occurred_at: new Date().toISOString().replace(/\.\d{3}Z$/, '.000Z') };
     if (corps) e.body = String(corps).slice(0, 2000);
     if (meta) e.meta = meta;
     this.file.push(e);
@@ -58,7 +58,7 @@ export class Synapse {
     const cle = 'ollama:' + String(message).slice(0, 80);
     if (Date.now() - (this.pannes.get(cle) || 0) < 600_000) return;
     this.pannes.set(cle, Date.now());
-    this.raconter('incident.ollama', `Oracle : Ollama ne répond pas — ${String(message).slice(0, 160)}`, { tags: ['panne', 'ollama'], meta: { message: String(message).slice(0, 300) } });
+    this.raconter('incident.ollama', `DIALEKT : Ollama ne répond pas — ${String(message).slice(0, 160)}`, { tags: ['panne', 'ollama'], meta: { message: String(message).slice(0, 300) } });
   }
-  reglage(titre, meta) { this.raconter('oracle.config', String(titre).slice(0, 200), { tags: ['reglage'], meta: meta || {} }); }
+  reglage(titre, meta) { this.raconter('dialekt.config', String(titre).slice(0, 200), { tags: ['reglage'], meta: meta || {} }); }
 }

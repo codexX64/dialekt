@@ -1,5 +1,5 @@
-// Base d'Oracle : conversations, duels, projets, quotas. Même fichier que la
-// version 1 (oracle.db) : les tables existantes sont reprises telles quelles,
+// Base de DIALEKT : conversations, duels, projets, quotas. Même fichier que la
+// version 1 (oracle.db, renommé dialekt.db) : les tables existantes sont reprises telles quelles,
 // et chaque ligne gagne un propriétaire (compte), filtré dans chaque requête.
 import { DatabaseSync } from 'node:sqlite';
 import crypto from 'node:crypto';
@@ -29,9 +29,14 @@ export function exigerInscriptible(chemins, acces = f => fs.accessSync(f, fs.con
 
 export function ouvrirBase(dossier) {
   fs.mkdirSync(dossier, { recursive: true, mode: 0o700 });
-  const fichier = path.join(dossier, 'oracle.db');
+  const fichier = path.join(dossier, 'dialekt.db');
   const fichiers = [fichier, fichier + '-wal', fichier + '-shm'];
-  exigerInscriptible([dossier, ...fichiers]);
+  const ancien = path.join(dossier, 'oracle.db');
+  exigerInscriptible([dossier, ...fichiers, ancien, ancien + '-wal', ancien + '-shm']);
+  // Le service s'appelait Oracle : sa base prend le nouveau nom, journaux compris, une fois.
+  if (!fs.existsSync(fichier) && fs.existsSync(ancien)) {
+    for (const suffixe of ['-wal', '-shm', '']) if (fs.existsSync(ancien + suffixe)) fs.renameSync(ancien + suffixe, fichier + suffixe);
+  }
   // Base et journaux lisibles du seul service, quel que soit le masque du processus.
   fs.closeSync(fs.openSync(fichier, 'a', 0o600));
   for (const f of fichiers) if (fs.existsSync(f)) fs.chmodSync(f, 0o600);
@@ -216,7 +221,7 @@ export class Conversations {
     this.db.prepare('DELETE FROM quotas WHERE compte = ?').run(compte);
   }
 
-  // Ce qu'Oracle garde d'un compte, pour l'export de ses données.
+  // Ce que DIALEKT garde d'un compte, pour l'export de ses données.
   exporter(compte) {
     return {
       projets: this.projets(compte).map(({ id, name }) => ({ id, name })),

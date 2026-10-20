@@ -1,16 +1,16 @@
-# Oracle seul, sans le Hub : docker compose up -d --build
+# DIALEKT seul, sans le Hub : docker compose up -d --build
 # Les réglages viennent de .env (voir .env.example).
 services:
-  oracle:
+  dialekt:
     build: .
-    image: oracle-ai:local
-    container_name: oracle-ai
+    image: dialekt:local
+    container_name: dialekt
     restart: unless-stopped
     env_file: .env
     ports:
-      - "${ORACLE_PORT:-8112}:8112"
+      - "${DIALEKT_PORT:-8112}:8112"
     volumes:
-      - oracle-data:/app/data
+      - dialekt-data:/app/data
     read_only: true
     tmpfs:
       - /tmp:size=64m,mode=1777
@@ -28,4 +28,4 @@ services:
         max-file: "5"
 
 volumes:
-  oracle-data:
+  dialekt-data:

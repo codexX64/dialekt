@@ -41,14 +41,14 @@ jobs:
           context: .
           platforms: linux/amd64
           load: true
-          tags: oracle-ai:crible
+          tags: dialekt:crible
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Crible des vulnérabilités de l'image
         uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
         with:
-          image: oracle-ai:crible
+          image: dialekt:crible
           severity-cutoff: high
           only-fixed: true
           fail-build: true
@@ -63,14 +63,14 @@ jobs:
       - id: etiquettes
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
-          images: ${{ env.REGISTRE }}/codexx64/oracle-ai
+          images: ${{ env.REGISTRE }}/codexx64/dialekt
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=sha,format=short,enable={{is_default_branch}}
           labels: |
-            org.opencontainers.image.title=Oracle
+            org.opencontainers.image.title=DIALEKT
             org.opencontainers.image.description=IA locale en duel contre une IA en ligne, juge deterministe
             org.opencontainers.image.vendor=CodexX64
             org.opencontainers.image.licenses=MIT

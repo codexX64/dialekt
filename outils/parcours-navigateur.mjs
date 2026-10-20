@@ -1,11 +1,11 @@
-// Parcours réel d'Oracle dans Chromium (clé d'accès virtuelle) et contrôle de
+// Parcours réel de DIALEKT dans Chromium (clé d'accès virtuelle) et contrôle de
 // mise en page à chaque largeur. Usage :
 //   node outils/parcours-navigateur.mjs http://localhost:8112 JETON DOSSIER
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 import { chevauchements, LARGEURS } from '../socle/essai/mise-en-page.mjs';
 
-const [base, jeton, sortie = '/tmp/captures-oracle'] = process.argv.slice(2);
+const [base, jeton, sortie = '/tmp/captures-dialekt'] = process.argv.slice(2);
 fs.mkdirSync(sortie, { recursive: true });
 const navigateur = await chromium.launch();
 const contexte = await navigateur.newContext({ viewport: { width: 1280, height: 860 } });
@@ -32,7 +32,7 @@ async function controle(nom, { attendre = 250, avant } = {}) {
 await page.goto(base);
 await page.getByLabel('Jeton d’installation').fill(jeton);
 await page.getByLabel('Identifiant').fill('ana');
-await page.getByLabel('Mot de passe').fill('phrase de passe pour oracle en local');
+await page.getByLabel('Mot de passe').fill('phrase de passe pour dialekt en local');
 await page.getByRole('button', { name: 'Créer le compte' }).click();
 await page.getByRole('button', { name: /Créer la clé maintenant/ }).click();
 await page.getByText('J’ai rangé ces codes en lieu sûr.').click();

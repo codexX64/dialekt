@@ -17,8 +17,8 @@ let o, ollama, kimi, syn, admin, membre, autre, base, env;
 async function lancer(dossier, extra = {}) {
   env = {
     PORT: '0', HOTE: '127.0.0.1', DATA_DIR: dossier, OLLAMA_URL: ollama.url, ADVERSAIRE: 'compatible', ADVERSAIRE_URL: kimi.url, ADVERSAIRE_CLE: 'cle-essai',
-    ADVERSAIRE_NOM: 'Kimi', ADVERSAIRE_MODELE: 'kimi-k2-0905-preview', ORACLE_HUB_TOKEN: JETON_HUB, SYNAPSE_URL: syn.url, SYNAPSE_JETON: 'cer_oracle_essai',
-    SOCLE_JETON_INSTALLATION: 'jeton-installation-oracle-essai', ORACLE_DUELS_MINUTE: '5', ...extra,
+    ADVERSAIRE_NOM: 'Kimi', ADVERSAIRE_MODELE: 'kimi-k2-0905-preview', DIALEKT_HUB_TOKEN: JETON_HUB, SYNAPSE_URL: syn.url, SYNAPSE_JETON: 'cer_dialekt_essai',
+    SOCLE_JETON_INSTALLATION: 'jeton-installation-dialekt-essai', DIALEKT_DUELS_MINUTE: '5', ...extra,
   };
   const x = await demarrer(env, { log: SILENCE });
   const port = x.serveur.address().port;
@@ -27,10 +27,10 @@ async function lancer(dossier, extra = {}) {
 
 before(async () => {
   ollama = await fauxOllama(); kimi = await fauxFournisseur('openai'); syn = await fauxSynapse();
-  base = fs.mkdtempSync(path.join(os.tmpdir(), 'oracle-'));
+  base = fs.mkdtempSync(path.join(os.tmpdir(), 'dialekt-'));
   o = await lancer(base);
   admin = o.client();
-  await adminComplet(admin, { jeton: 'jeton-installation-oracle-essai' });
+  await adminComplet(admin, { jeton: 'jeton-installation-dialekt-essai' });
   ({ client: membre } = await membreInvite(admin, () => o.client(), { identifiant: 'bruno' }));
   ({ client: autre } = await membreInvite(admin, () => o.client(), { identifiant: 'chloe' }));
 });
@@ -56,14 +56,14 @@ test('en-têtes de sécurité, nonce, pas de fuite de version ni de page de doc'
 });
 
 test('derrière un relais HTTPS déclaré : HSTS et cookie __Host- sécurisé ; relais non déclaré ignoré', async () => {
-  const relaye = await lancer(fs.mkdtempSync(path.join(os.tmpdir(), 'oracle-relais-')), { SOCLE_PROXYS: '127.0.0.1/32' });
+  const relaye = await lancer(fs.mkdtempSync(path.join(os.tmpdir(), 'dialekt-relais-')), { SOCLE_PROXYS: '127.0.0.1/32' });
   try {
     const c = relaye.client();
     const h = { 'x-forwarded-proto': 'https', 'x-forwarded-for': '203.0.113.7' };
-    const r = await c.req('POST', '/api/compte/installation', { jeton: 'jeton-installation-oracle-essai', identifiant: 'ana', motDePasse: MDP_ESSAI }, { entetes: h, origine: `https://localhost:${relaye.port}` });
+    const r = await c.req('POST', '/api/compte/installation', { jeton: 'jeton-installation-dialekt-essai', identifiant: 'ana', motDePasse: MDP_ESSAI }, { entetes: h, origine: `https://localhost:${relaye.port}` });
     assert.equal(r.status, 200, JSON.stringify(r.json));
     assert.match(r.entetes['strict-transport-security'], /max-age=\d{8,}; includeSubDomains/);
-    const cookie = r.setCookie.find(x => x.startsWith('__Host-oracle-sid='));
+    const cookie = r.setCookie.find(x => x.startsWith('__Host-dialekt-sid='));
     assert.ok(cookie, r.setCookie.join(' | '));
     for (const attr of ['HttpOnly', 'Secure', 'SameSite=Strict', 'Path=/', 'Max-Age=']) assert.ok(cookie.includes(attr), `${attr} dans ${cookie}`);
     assert.equal(relaye.socle.journal.lire({ limite: 1 })[0].ip, '203.0.113.7', 'adresse du client lue du relais déclaré');
@@ -138,7 +138,7 @@ test('sans session, aucune route de données ne répond ; sans le bon rôle, auc
 test('security.txt : où signaler une faille', async () => {
   const r = await o.client().get('/.well-known/security.txt');
   assert.equal(r.status, 200);
-  assert.match(r.texte, /^Contact: https:\/\/github\.com\/codexX64\/OracleAI\/security\/advisories\/new$/m);
+  assert.match(r.texte, /^Contact: https:\/\/github\.com\/codexX64\/dialekt\/security\/advisories\/new$/m);
   assert.match(r.texte, /^Expires: \d{4}-\d{2}-\d{2}T/m);
 });
 
@@ -147,7 +147,7 @@ test('fichiers cachés et chemins hors des dossiers servis : 404, jamais la page
   for (const p of ['/.env', '/.git/config', '/socle/.env', '/web/.gitignore', '/../package.json', '/%2e%2e/package.json', '/package.json', '/src/main.js']) {
     const r = await c.get(p);
     assert.equal(r.status, 404, p);
-    assert.doesNotMatch(r.texte, /<html|SOCLE_|"name": "oracle/i, p);
+    assert.doesNotMatch(r.texte, /<html|SOCLE_|"name": "dialekt/i, p);
   }
 });
 
@@ -158,9 +158,9 @@ test('données d’un compte : export complet sous renfort, effacement à la sup
   const r = await dora.get('/api/compte/export');
   assert.equal(r.status, 200, JSON.stringify(r.json));
   assert.equal(r.json.compte.identifiant, 'dora');
-  assert.equal(r.json.oracle.conversations[0].conversation.id, conv);
-  assert.match(r.json.oracle.conversations[0].duels[0].question, /Dora/);
-  assert.deepEqual(r.json.oracle.projets.map(p => p.name), ['Notes']);
+  assert.equal(r.json.dialekt.conversations[0].conversation.id, conv);
+  assert.match(r.json.dialekt.conversations[0].duels[0].question, /Dora/);
+  assert.deepEqual(r.json.dialekt.projets.map(p => p.name), ['Notes']);
   const id = (await admin.get('/api/compte/admin/comptes')).json.comptes.find(c => c.identifiant === 'dora').id;
   const avant = o.db.prepare('SELECT COUNT(*) n FROM conversations WHERE compte = ?').get(id).n;
   assert.equal(avant, 1);
@@ -247,10 +247,10 @@ test('plafond de duels par minute', async () => {
 });
 
 test('plafond journalier : refus, trace au journal, administrateurs prévenus une fois', async () => {
-  const petit = await lancer(fs.mkdtempSync(path.join(os.tmpdir(), 'oracle-plafond-')), { ORACLE_DUELS_JOUR: '1' });
+  const petit = await lancer(fs.mkdtempSync(path.join(os.tmpdir(), 'dialekt-plafond-')), { DIALEKT_DUELS_JOUR: '1' });
   try {
     const chef = petit.client();
-    await adminComplet(chef, { jeton: 'jeton-installation-oracle-essai' });
+    await adminComplet(chef, { jeton: 'jeton-installation-dialekt-essai' });
     const hub = petit.client();
     const h = { entetes: { authorization: `Bearer ${JETON_HUB}` }, origine: null };
     assert.equal((await hub.req('POST', '/api/duel', { q: 'Première question du jour, bien assez longue' }, h)).status, 200);
@@ -274,9 +274,10 @@ test('téléchargement de modèle : progression, et échec annoncé comme tel', 
 });
 
 test('migration : comptes de la version 1 repris, secrets scellés, conversations attribuées', async () => {
-  const dossier = fs.mkdtempSync(path.join(os.tmpdir(), 'oracle-v1-'));
-  // Empreinte produite par argon2-cffi (version 1) pour « ancienne phrase de passe oracle ».
+  const dossier = fs.mkdtempSync(path.join(os.tmpdir(), 'dialekt-v1-'));
+  // Empreinte produite par argon2-cffi (version 1) pour « ancienne phrase de passe oracle » (le nom d'alors).
   const empreinte = '$argon2id$v=19$m=65536,t=3,p=4$O2wGaFGPeQF65X3K2dE3jA$b+DUvTpw038JpOZijm5pJQrG/M/mQFlSfmj+Z7bU5MU';
+  // La base de la version 1 porte l'ancien nom du service : elle est renommée au démarrage.
   const db = new DatabaseSync(path.join(dossier, 'oracle.db'));
   db.exec(`CREATE TABLE users(id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, pw_hash TEXT NOT NULL, totp_secret TEXT, totp_enabled INTEGER DEFAULT 0, created REAL, last_login REAL, is_admin INTEGER DEFAULT 0, session_epoch INTEGER DEFAULT 0);
     CREATE TABLE backup_codes(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, code_hash TEXT, used INTEGER DEFAULT 0);
@@ -290,6 +291,7 @@ test('migration : comptes de la version 1 repris, secrets scellés, conversation
   db.close();
   const v1 = await lancer(dossier);
   try {
+    assert.deepEqual([fs.existsSync(path.join(dossier, 'dialekt.db')), fs.existsSync(path.join(dossier, 'oracle.db'))], [true, false], 'oracle.db devenue dialekt.db');
     const lignes = v1.db.prepare('SELECT identifiant, role, totp FROM socle_comptes ORDER BY identifiant').all();
     assert.deepEqual(lignes.map(l => [l.identifiant, l.role]), [['alice', 'admin'], ['bob', 'membre']]);
     assert.ok(lignes[0].totp.startsWith('v1.') && !lignes[0].totp.includes('JBSWY3DP'), 'TOTP scellé');
@@ -306,12 +308,12 @@ test('migration : comptes de la version 1 repris, secrets scellés, conversation
 });
 
 test('une configuration invalide arrête le démarrage', async () => {
-  await assert.rejects(() => demarrer({ ...env, DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'o-')), ORACLE_HUB_TOKEN: 'court', PORT: 'abc' }, { log: SILENCE }), /PORT doit être un entier[\s\S]*ORACLE_HUB_TOKEN/);
+  await assert.rejects(() => demarrer({ ...env, DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'o-')), DIALEKT_HUB_TOKEN: 'court', PORT: 'abc' }, { log: SILENCE }), /PORT doit être un entier[\s\S]*DIALEKT_HUB_TOKEN/);
   await assert.rejects(() => demarrer({ ...env, DATA_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'o-')), SOCLE_ARGON2_M: '1024' }, { log: SILENCE }), /SOCLE_ARGON2_M/);
 });
 
 test('Claude Code : question par l’entrée standard, aucun outil, environnement et dossier vides', async () => {
-  const dossier = fs.mkdtempSync(path.join(os.tmpdir(), 'oracle-cli-'));
+  const dossier = fs.mkdtempSync(path.join(os.tmpdir(), 'dialekt-cli-'));
   const bin = path.join(dossier, 'claude');
   fs.writeFileSync(bin, `#!/bin/sh\nexec ${process.execPath} ${path.resolve('test/faux-claude.mjs')} "$@"\n`, { mode: 0o755 });
   const cli = await lancer(path.join(dossier, 'donnees'), { ADVERSAIRE: 'claude-code', ADVERSAIRE_URL: '', ADVERSAIRE_CLE: '', ADVERSAIRE_MODELE: 'sonnet', CLAUDE_BIN: bin, CLAUDE_CODE_OAUTH_TOKEN: 'jeton-claude-essai', MEMORY_URL: '' });
@@ -328,7 +330,7 @@ test('Claude Code : question par l’entrée standard, aucun outil, environnemen
     assert.equal(trace.argv[i + 1], '', 'aucun outil');
     assert.ok(trace.argv.includes('--strict-mcp-config') && trace.argv.includes('--no-session-persistence'));
     assert.deepEqual(trace.fichiers, [], 'dossier de travail vide');
-    for (const secret of ['ORACLE_HUB_TOKEN', 'SYNAPSE_JETON', 'ADVERSAIRE_CLE', 'SOCLE_JETON_INSTALLATION', 'MEMORY_API_KEY']) assert.ok(!trace.env.includes(secret), secret);
+    for (const secret of ['DIALEKT_HUB_TOKEN', 'SYNAPSE_JETON', 'ADVERSAIRE_CLE', 'SOCLE_JETON_INSTALLATION', 'MEMORY_API_KEY']) assert.ok(!trace.env.includes(secret), secret);
     assert.ok(trace.env.includes('CLAUDE_CODE_OAUTH_TOKEN'));
   } finally { await cli.arreter(); fs.rmSync(path.join(os.tmpdir(), 'claude-appel.json'), { force: true }); }
 });
@@ -379,4 +381,11 @@ test('base : un dossier ou un fichier non inscriptible arrête le démarrage ave
     for (const f of fs.readdirSync(d)) assert.equal(fs.statSync(path.join(d, f)).mode & 0o777, 0o600, f);
     assert.equal(fs.statSync(d).mode & 0o777, 0o700);
   } finally { process.umask(masque); fs.rmSync(dossier, { recursive: true, force: true }); }
+});
+
+test('ancien nom : un .env d’Oracle (ORACLE_*) vaut encore, le nouveau nom l’emporte', async () => {
+  const { lireConfigDialekt } = await import('../src/config.js');
+  assert.equal(lireConfigDialekt({ ORACLE_DUELS_JOUR: '7' }).duelsJour, 7);
+  assert.equal(lireConfigDialekt({ ORACLE_DUELS_JOUR: '7', DIALEKT_DUELS_JOUR: '9' }).duelsJour, 9);
+  assert.equal(lireConfigDialekt({ ORACLE_HUB_TOKEN: JETON_HUB }).jetonHub, JETON_HUB);
 });

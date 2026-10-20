@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# Oracle 2 : Node seul, aucune dépendance d'exécution. L'image de base est
+# DIALEKT 2 : Node seul, aucune dépendance d'exécution. L'image de base est
 # épinglée par empreinte (index multi-architecture amd64 + arm64) : une étiquette
 # peut être déplacée, une empreinte non.
 ARG NODE_IMAGE=node:24.21.0-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6

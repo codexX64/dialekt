@@ -22,7 +22,7 @@ export class Duels {
     Object.assign(this, { cfg, ollama, adversaires, reglages, conversations, synapse });
   }
 
-  // Le modèle retenu pour l'adversaire en service : celui choisi dans Oracle,
+  // Le modèle retenu pour l'adversaire en service : celui choisi dans DIALEKT,
   // sauf si le Hub a changé ADVERSAIRE_MODELE depuis ce choix.
   async modeleAdverse(demande) {
     const r = this.reglages.lire();
@@ -56,7 +56,7 @@ export class Duels {
       attendus = 2;
       const manque = this.adversaires.pret();
       const cm = manque ? null : await this.modeleAdverse(modeleAdverse);
-      if (manque || !cm) file.pousser(['meta', { side: 'claude', model: cm || f.nom, ms: 0, error: manque || `Choisis le modèle de ${f.nom} dans les réglages d'Oracle.` }]);
+      if (manque || !cm) file.pousser(['meta', { side: 'claude', model: cm || f.nom, ms: 0, error: manque || `Choisis le modèle de ${f.nom} dans les réglages de DIALEKT.` }]);
       else producteurs.push(this.adversaires.diffuser({ modele: cm, systeme, question: q, contexte: ctx, jetons: r.num_predict, file, signal }));
     }
     let local = null, adverse = null;

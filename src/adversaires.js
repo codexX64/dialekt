@@ -201,7 +201,7 @@ export class Adversaires {
     const t0 = performance.now(), texte = [];
     const bin = this.binaire();
     if (!bin) return this.fin(file, modele, t0, { erreur: 'Claude Code n’est pas installé dans ce conteneur.' });
-    const travail = fs.mkdtempSync(path.join(os.tmpdir(), 'oracle-claude-'));
+    const travail = fs.mkdtempSync(path.join(os.tmpdir(), 'dialekt-claude-'));
     const env = {
       PATH: '/usr/local/bin:/usr/bin:/bin', HOME: travail, LANG: 'C.UTF-8', TZ: process.env.TZ || 'UTC',
       DISABLE_AUTOUPDATER: '1', CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1',

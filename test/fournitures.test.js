@@ -1,4 +1,4 @@
-// Ce qu'Oracle sert sans l'avoir écrit : chaque fichier doit être exactement
+// Ce que DIALEKT sert sans l'avoir écrit : chaque fichier doit être exactement
 // celui dont PROVENANCE garde l'empreinte.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
