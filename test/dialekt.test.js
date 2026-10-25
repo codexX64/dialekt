@@ -366,6 +366,16 @@ test('installé par le Hub : le premier compte passe par le lien du Hub, jamais 
   assert.match(compose, /SOCLE_JETON_INSTALLATION: "\{\{config\.SOCLE_JETON_INSTALLATION\}\}"/);
 });
 
+test('installé par le Hub derrière Relay : relais de confiance du réseau du Hub par défaut, HTTPS reconnu', async () => {
+  const m = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, '../hub.json'), 'utf8'));
+  const { SPEC_SOCLE, lireConfig, listeConfiance } = await import('../socle/src/index.js');
+  const proxys = m.config.find(c => c.key === 'SOCLE_PROXYS').default;
+  assert.ok(proxys, 'relais de confiance vide : DIALEKT se croirait en HTTP derrière Relay');
+  // Lu comme le socle le lit au démarrage.
+  const relais = listeConfiance(lireConfig({ proxys: SPEC_SOCLE.proxys }, { SOCLE_PROXYS: proxys }).proxys);
+  assert.ok(relais.check('172.18.0.5', 'ipv4') && !relais.check('10.0.0.11', 'ipv4'), 'le réseau Docker du Hub, pas le réseau local');
+});
+
 test('installé par le Hub sous l’ancien nom : proposé en mise à jour, chaque réglage renommé retrouve sa clé', () => {
   const m = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, '../hub.json'), 'utf8'));
   const [r] = m.replaces;
