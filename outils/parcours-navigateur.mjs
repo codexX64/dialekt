@@ -101,6 +101,9 @@ await controle('conversations');
 await page.getByRole('button', { name: 'Sécurité', exact: true }).click();
 await page.getByRole('heading', { name: 'Sécurité', exact: true }).waitFor();
 await controle('securite');
+await page.getByRole('button', { name: 'Comptes', exact: true }).click();
+await page.getByRole('heading', { name: 'Comptes', exact: true }).waitFor();
+await controle('comptes');
 
 const defauts = rapport.filter(r => r.defauts.length);
 fs.writeFileSync(`${sortie}/rapport.json`, JSON.stringify({ rapport, erreurs }, null, 2));
