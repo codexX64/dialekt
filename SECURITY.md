@@ -26,31 +26,31 @@ Le service s’appelait « Oracle », le nom d’une grande entreprise : il devi
 ## Control status
 | ID | Severity | Status | Evidence | Notes |
 |---|---|---|---|---|
-| REQ-AUTH-001 | CRITICAL | PASS | `socle/src/comptes.js:24` ; mot de passe, TOTP, clés et codes de secours cumulables : essai `socle/test/parcours.test.js:159` | socle vérifié par ses propres essais (parcours.test.js, 37 essais) avant embarquement |
-| REQ-AUTH-002 | CRITICAL | PASS | `socle/src/comptes.js:27` ; `socle/src/index.js:49` ; réglable sans déploiement : `socle/src/portail.js:462` | défaut : mot de passe et TOTP facultatifs, clé requise pour les administrateurs |
-| REQ-AUTH-003 | CRITICAL | PASS | `socle/src/webauthn.js:26` ; vingt clés nommées : `socle/src/comptes.js:35` ; renommer et retirer : `socle/src/portail.js:302` | liste avec dates de création et d’usage dans la page Sécurité |
+| REQ-AUTH-001 | CRITICAL | PASS | `socle/src/comptes.js:25` ; mot de passe, TOTP, clés et codes de secours cumulables : essai `socle/test/parcours.test.js:159` | socle vérifié par ses propres essais (parcours.test.js, 37 essais) avant embarquement |
+| REQ-AUTH-002 | CRITICAL | PASS | `socle/src/comptes.js:28` ; `socle/src/index.js:49` ; réglable sans déploiement : `socle/src/portail.js:476` | défaut : mot de passe et TOTP facultatifs, clé requise pour les administrateurs |
+| REQ-AUTH-003 | CRITICAL | PASS | `socle/src/webauthn.js:26` ; vingt clés nommées : `socle/src/comptes.js:39` ; renommer et retirer : `socle/src/portail.js:316` | liste avec dates de création et d’usage dans la page Sécurité |
 | REQ-AUTH-004 | CRITICAL | PASS | `socle/src/webauthn.js:46` ; origine `socle/src/webauthn.js:47` ; rpIdHash `socle/src/webauthn.js:103` | défi à usage unique lié à la session, UP et UV exigés, signature et compteur vérifiés |
-| REQ-AUTH-005 | CRITICAL | PASS | `socle/src/comptes.js:643` ; renfort et fermeture des autres sessions : `socle/src/comptes.js:659` | la notification part à l’adresse vérifiée quand un relais existe (voir REQ-AUTH-014) |
-| REQ-AUTH-006 | CRITICAL | PASS | `socle/src/comptes.js:902` ; jeton de 20 minutes, haché, unique : `socle/src/comptes.js:33` | essai `socle/test/parcours.test.js:242` |
-| REQ-AUTH-007 | HIGH | PASS | `socle/src/comptes.js:36` ; 100 bits, haché Argon2id, usage unique : `socle/src/comptes.js:443` | alerte « secours.utilise » (courriel si relais, voir REQ-AUTH-014) |
-| REQ-AUTH-008 | HIGH | PASS | `socle/src/totp.js:35` ; rejeu refusé (totp_pas) : `socle/src/comptes.js:535` | RFC 6238, 6 chiffres, 30 s, ±1 pas, secret scellé AES-256-GCM |
-| REQ-AUTH-009 | CRITICAL | PASS | aucune voie SMS ni code par courriel : `grep -rniE "sms\|twilio" socle/src src` → 0 ligne ; connexions possibles : `socle/src/comptes.js:376`, `socle/src/comptes.js:402`, `socle/src/comptes.js:424`, `socle/src/comptes.js:489` | un mot de passe seul n’ouvre qu’une session d’inscription |
+| REQ-AUTH-005 | CRITICAL | PASS | `socle/src/comptes.js:732` ; renfort et fermeture des autres sessions : `socle/src/comptes.js:748` | la notification part à l’adresse vérifiée quand un relais existe (voir REQ-AUTH-014) |
+| REQ-AUTH-006 | CRITICAL | PASS | `socle/src/comptes.js:993` ; jeton de 20 minutes, haché, unique : `socle/src/comptes.js:37` | essai `socle/test/parcours.test.js:242` |
+| REQ-AUTH-007 | HIGH | PASS | `socle/src/comptes.js:40` ; 100 bits, haché Argon2id, usage unique : `socle/src/comptes.js:532` | alerte « secours.utilise » (courriel si relais, voir REQ-AUTH-014) |
+| REQ-AUTH-008 | HIGH | PASS | `socle/src/totp.js:35` ; rejeu refusé (totp_pas) : `socle/src/comptes.js:624` | RFC 6238, 6 chiffres, 30 s, ±1 pas, secret scellé AES-256-GCM |
+| REQ-AUTH-009 | CRITICAL | PASS | aucune voie SMS ni code par courriel : `grep -rniE "sms\|twilio" socle/src src` → 0 ligne ; connexions possibles : `socle/src/comptes.js:465`, `socle/src/comptes.js:491`, `socle/src/comptes.js:513`, `socle/src/comptes.js:578` | un mot de passe seul n’ouvre qu’une session d’inscription |
 | REQ-AUTH-010 | CRITICAL | PASS | `socle/src/limiteur.js:20` (SQLite, par adresse et par compte, paliers de verrou, preuve de travail) ; appliqué à mot de passe, TOTP, secours, clé, jetons, adresse d’alerte | essai `socle/test/parcours.test.js:180` |
 | REQ-AUTH-011 | HIGH | PASS | vérification leurre : `socle/src/argon.js:110` ; message unique | essai `socle/test/parcours.test.js:81` |
-| REQ-AUTH-012 | HIGH | PASS | `socle/src/comptes.js:941` : l’adresse n’existe que dans le jeton haché tant qu’elle n’est pas vérifiée ; `socle/src/comptes.js:950` | l’adresse ne sert qu’aux alertes : ni identifiant, ni récupération, ni droit ; pas d’inscription libre (invitation seulement) |
-| REQ-AUTH-013 | HIGH | PASS | `socle/src/comptes.js:740` | en mode HTTP dégradé la clé est impossible : la règle retombe sur deux facteurs, affiché en permanence (voir REQ-WEB-001) |
-| REQ-AUTH-014 | MEDIUM | FAIL | `socle/src/notifications.js:97` ; « ce n’était pas moi » : `socle/src/comptes.js:928` | implémenté et essayé (`socle/test/courriel.test.js:63` par courriel») ; ne part que si un relais SMTP est configuré → action H2 |
+| REQ-AUTH-012 | HIGH | PASS | `socle/src/comptes.js:1032` : l’adresse n’existe que dans le jeton haché tant qu’elle n’est pas vérifiée ; `socle/src/comptes.js:1041` | l’adresse ne sert qu’aux alertes : ni identifiant, ni récupération, ni droit ; pas d’inscription libre (invitation seulement) |
+| REQ-AUTH-013 | HIGH | PASS | `socle/src/comptes.js:831` | en mode HTTP dégradé la clé est impossible : la règle retombe sur deux facteurs, affiché en permanence (voir REQ-WEB-001) |
+| REQ-AUTH-014 | MEDIUM | FAIL | `socle/src/notifications.js:97` ; « ce n’était pas moi » : `socle/src/comptes.js:1019` | implémenté et essayé (`socle/test/courriel.test.js:63` par courriel») ; ne part que si un relais SMTP est configuré → action H2 |
 | REQ-CRYPT-001 | CRITICAL | PASS | `socle/src/argon.js:15` ; 64 Mio, t=3, p=4 par défaut : `socle/src/index.js:42` | Argon2id natif de Node (crypto.argon2), sel de 16 octets par empreinte ; les essais tournent aux paramètres de production, sans réglage abaissé (`test/dialekt.test.js:21`) |
 | REQ-CRYPT-002 | HIGH | PASS | `socle/src/argon.js:72` ; écrit dans la même requête : `socle/src/argon.js:129` | scrypt hérité et paramètres plus faibles remplacés à la connexion |
 | REQ-CRYPT-003 | MEDIUM | N/A | bcrypt absent : `grep -rniE "bcrypt" socle/src src` → 0 ligne ; Argon2id seul |  |
 | REQ-CRYPT-004 | HIGH | PASS | `socle/src/motdepasse.js:12`, `socle/src/motdepasse.js:13`, liste de fuites locale `socle/src/motdepasse.js:18` | contrôlé côté serveur, sans règle de composition ni rotation forcée |
 | REQ-CRYPT-005 | HIGH | PASS | `socle/src/outils.js:16` ; comparaisons `socle/src/outils.js:23` ; `grep -rnE "Math.random\|uuidv1" src web socle/src socle/web` → 0 ligne | jetons de 256 bits, sessions de 256 bits, défis WebAuthn aléatoires |
-| REQ-CRYPT-006 | MEDIUM | PASS | sessions : `socle/src/comptes.js:276` ; jetons : `socle/src/comptes.js:876` ; secours : `socle/src/comptes.js:443` | essai `socle/test/courriel.test.js:108` |
-| REQ-SESS-001 | CRITICAL | PASS | `socle/src/http.js:105` ; __Host- en HTTPS : `socle/src/portail.js:50` | essai `test/dialekt.test.js:58` ; aucune session dans le stockage du navigateur |
-| REQ-SESS-002 | CRITICAL | PASS | `socle/src/comptes.js:286` à la connexion, au renfort et à chaque changement de facteur ou de rôle | pas de jeton de rafraîchissement : sessions serveur |
-| REQ-SESS-003 | HIGH | PASS | `socle/src/comptes.js:322` ; révocation : `socle/src/portail.js:312` et incident : `socle/src/portail.js:475` | appareil, adresse IP, première et dernière vue |
-| REQ-SESS-004 | HIGH | PASS | `socle/src/comptes.js:661` ; déconnexion serveur : `socle/src/portail.js:269` |  |
-| REQ-SESS-005 | HIGH | PASS | `socle/src/comptes.js:338` ; facteur le plus fort : `socle/src/comptes.js:672` | facteurs, adresse d’alerte, rôles, suppression, politique, export ; réglages et téléchargements de DIALEKT réservés aux administrateurs |
+| REQ-CRYPT-006 | MEDIUM | PASS | sessions : `socle/src/comptes.js:294` ; jetons : `socle/src/comptes.js:967` ; secours : `socle/src/comptes.js:532` | essai `socle/test/courriel.test.js:108` |
+| REQ-SESS-001 | CRITICAL | PASS | `socle/src/http.js:105` ; __Host- en HTTPS : `socle/src/portail.js:51` | essai `test/dialekt.test.js:58` ; aucune session dans le stockage du navigateur |
+| REQ-SESS-002 | CRITICAL | PASS | `socle/src/comptes.js:304` à la connexion, au renfort et à chaque changement de facteur ou de rôle | pas de jeton de rafraîchissement : sessions serveur |
+| REQ-SESS-003 | HIGH | PASS | `socle/src/comptes.js:343` ; révocation : `socle/src/portail.js:326` et incident : `socle/src/portail.js:489` | appareil, adresse IP, première et dernière vue |
+| REQ-SESS-004 | HIGH | PASS | `socle/src/comptes.js:750` ; déconnexion serveur : `socle/src/portail.js:276` |  |
+| REQ-SESS-005 | HIGH | PASS | `socle/src/comptes.js:427` ; facteur le plus fort : `socle/src/comptes.js:761` | facteurs, adresse d’alerte, rôles, suppression, politique, export ; réglages et téléchargements de DIALEKT réservés aux administrateurs |
 | REQ-SESS-006 | MEDIUM | PASS | 12 h absolues, 60 min d’inactivité : `socle/src/index.js:40` | pas de JWT |
 | REQ-ANON-001 | CRITICAL | PASS | `git log --format="%an <%ae>" \| sort -u` → une ligne, le pseudonyme du projet sur GitHub | identité posée dans le dépôt avant tout commit ; voir la note sur l’orthographe du pseudonyme dans « Human actions required » |
 | REQ-ANON-002 | CRITICAL | PASS | commande « personal infrastructure, paths and networks » de l’annexe B.1, lancée sur l’arbre sans ce fichier → 4 lignes, toutes la propriété JavaScript `x.local` (carte du modèle local, `web/app.js:310`) : aucun chemin, aucune adresse privée, aucun domaine local | l’historique publié est traité dans le rapport d’anonymat hors dépôt |
@@ -60,13 +60,13 @@ Le service s’appelait « Oracle », le nom d’une grande entreprise : il devi
 | REQ-ANON-006 | HIGH | PASS | `git ls-files "*.png" "*.jpg" "*.pdf" "*.mp4"` → 0 fichier ; seules images : SVG texte (`web/icone.svg:1`) | polices WOFF2 : métadonnées de la fonderie uniquement |
 | REQ-ANON-007 | HIGH | PASS | données d’essai fabriquées : `test/faux.js:7`, comptes « ana », « bruno », « chloe », adresses exemple.org | relu intégralement |
 | REQ-ANON-008 | MEDIUM | FAIL | `git log --format=%aI \| grep -v "+00:00$" \| wc -l` → 5 (commits publiés avant cette session) | tous les nouveaux commits sont en UTC ; les cinq anciens sont publiés : décision H12 |
-| REQ-ANON-009 | MEDIUM | FAIL | pages d’erreur sans chemin : `socle/src/http.js:165` ; domaine et WHOIS hors dépôt | action H13 |
+| REQ-ANON-009 | MEDIUM | FAIL | pages d’erreur sans chemin : `socle/src/http.js:171` ; domaine et WHOIS hors dépôt | action H13 |
 | REQ-ANON-010 | MEDIUM | PASS | identité stable et unique, dates réelles (TZ=UTC, jamais antidatées) | aucune politique de contribution externe (dépôt personnel) |
 | REQ-CFG-001 | CRITICAL | PASS | `git grep -nIiE "(api[_-]?key\|secret\|token\|password\|bearer)\s*[=:]\s*[\"'][^\"']{8,}"` → 4 lignes : deux gabarits Compose (`deploy/compose.hub.yml:42`), le vecteur public de la RFC 6238 (`socle/test/crypto.test.js:106`) et un jeton factice d’essai ; detect-secrets → 5 résultats : 4 alphabets (Base32, Crockford, suites de clavier) et le même vecteur RFC | gitleaks en CI : `.github/workflows/verification.yml:48` |
 | REQ-CFG-002 | CRITICAL | PASS | clés des fournisseurs lues côté serveur seulement : `src/config.js:26` ; rien de secret dans `web/app.js:8` | le navigateur n’appelle que DIALEKT |
 | REQ-CFG-003 | HIGH | FAIL | VM d’essai et production distinctes (instruction de l’exploitant) | clés séparées par environnement à vérifier et à émettre : action H6 |
 | REQ-CFG-004 | HIGH | PASS | `socle/src/config.js:14` ; ensemble : `socle/src/index.js:71` | essai `test/dialekt.test.js:310` |
-| REQ-CFG-005 | HIGH | PASS | inventaire, émetteur et procédure par secret ci-dessous (« Secrets inventory ») ; SOCLE_CLE se tourne sans réinscription : `socle/src/comptes.js:112`, champ du Hub `hub.json:237` ; exercice de bout en bout : `node outils/exercice-rotation.mjs \| grep -c "^OK "` → 12, sur 12 vérifications (clé tournée sur une instance lancée comme en production, TOTP, clé d’accès et code de secours toujours valables, clé inconnue refusée) | essai du socle `socle/test/rotation.test.js:14` ; les clés des fournisseurs vues pendant le développement restent à brûler : SEC-SECRETS-006, action H5 |
+| REQ-CFG-005 | HIGH | PASS | inventaire, émetteur et procédure par secret ci-dessous (« Secrets inventory ») ; SOCLE_CLE se tourne sans réinscription : `socle/src/comptes.js:123`, champ du Hub `hub.json:237` ; exercice de bout en bout : `node outils/exercice-rotation.mjs \| grep -c "^OK "` → 12, sur 12 vérifications (clé tournée sur une instance lancée comme en production, TOTP, clé d’accès et code de secours toujours valables, clé inconnue refusée) | essai du socle `socle/test/rotation.test.js:14` ; les clés des fournisseurs vues pendant le développement restent à brûler : SEC-SECRETS-006, action H5 |
 | REQ-CI-001 | CRITICAL | FAIL | `.github/workflows/verification.yml:48` | Actions désactivées par la facturation, crochet local et protection de poussée à activer : actions H3, H4 |
 | REQ-CI-002 | HIGH | FAIL | `.github/workflows/verification.yml:109` | bloquant une fois les Actions rétablies et le contrôle requis : action H3 |
 | REQ-CI-003 | HIGH | FAIL | verrou : `deploy/claude-code/package-lock.json:3` ; audit : `.github/workflows/verification.yml:39` ; SBOM : `.github/workflows/publish.yml:88` | aucune dépendance d’exécution ; contrôle requis et alertes à activer : action H3 |
@@ -77,16 +77,16 @@ Le service s’appelait « Oracle », le nom d’une grande entreprise : il devi
 | REQ-WEB-002 | HIGH | PASS | `socle/src/http.js:62` ; `curl -sI /` → script-src 'self' 'nonce-…', object-src 'none', base-uri 'none', frame-ancestors 'none' | zéro violation au parcours Chromium (57 écrans × largeurs, 0 erreur console) |
 | REQ-WEB-003 | HIGH | PASS | `socle/src/http.js:79` ; no-store : `socle/src/http.js:150` | aucun en-tête Server ni X-Powered-By (`curl -sI`) |
 | REQ-WEB-004 | HIGH | PASS | aucun en-tête CORS émis : `curl -D - -H "Origin: https://evil.example" /api/health` → aucun Access-Control-* | API de même origine |
-| REQ-WEB-005 | HIGH | PASS | CSRF : `socle/src/portail.js:94` ; JSON exigé : `socle/src/http.js:122` ; aucune URL fournie par l’utilisateur n’est appelée (adresses du Hub seulement : `src/config.js:23`) | aucune redirection, aucun webhook reçu |
+| REQ-WEB-005 | HIGH | PASS | CSRF : `socle/src/portail.js:98` ; JSON exigé : `socle/src/http.js:122` ; aucune URL fournie par l’utilisateur n’est appelée (adresses du Hub seulement : `src/config.js:23`) | aucune redirection, aucun webhook reçu |
 | REQ-WEB-006 | CRITICAL | PASS | schéma strict sur chaque corps : `src/api.js:83` ; propriété dans la requête : `src/base.js:98` | erreurs génériques : `socle/src/http.js:159` |
 | REQ-WEB-007 | HIGH | PASS | requêtes préparées partout ; `grep -rnE "innerHTML\|execSync\|eval\(" src web socle/src socle/web` → 2 lignes, toutes deux dans le gabarit du socle (`socle/web/gabarit.js:115`), où le balisage est écrit dans le code et les valeurs posées en nœuds ; processus sans shell : `src/adversaires.js:213` |  |
 | REQ-WEB-008 | MEDIUM | PASS | toutes les requêtes : `src/main.js:38` ; corps bornés : `socle/src/http.js:128` ; listes plafonnées : `src/base.js:98` ; coût : `src/api.js:48` | essai `test/dialekt.test.js:219` |
 | REQ-DATA-001 | CRITICAL | PASS | SQLite embarqué, aucun port : `src/base.js:43` | dossier de données en 0700 : `src/base.js:31` ; base et journaux en 0600, dossier ou fichier non inscriptible refusé au démarrage avec sa cause : `src/base.js:21` |
 | REQ-DATA-002 | HIGH | FAIL | secrets TOTP chiffrés : `socle/src/chiffre.js:60` ; aucune connexion réseau à la base | chiffrement du disque des hôtes : action H7 |
 | REQ-DATA-003 | HIGH | FAIL | aucune sauvegarde automatisée du volume à ce jour | sauvegardes chiffrées hors hôte (fonction du Hub, en cours) et exercice de restauration daté : action H8 |
-| REQ-DATA-004 | HIGH | PASS | `socle/src/journal.js:10` ; refus : `socle/src/portail.js:106` ; limites : `socle/src/limiteur.js:48` ; sortie hors service : `socle/src/index.js:96` | acteur, action, objet, date, adresse, requête ; essai `socle/test/surveillance.test.js:33` |
-| REQ-DATA-005 | MEDIUM | PASS | vigie : `socle/src/vigie.js:11` ; runbook ci-dessous ; révocation globale : `socle/src/portail.js:475` | exercice du runbook à dater : action H8 |
-| REQ-DATA-006 | MEDIUM | PASS | `web/confidentialite.txt:7` ; effacement : `src/base.js:217` ; export : `socle/src/portail.js:330` | violation : délai de 72 h dans le runbook |
+| REQ-DATA-004 | HIGH | PASS | `socle/src/journal.js:10` ; refus : `socle/src/portail.js:110` ; limites : `socle/src/limiteur.js:48` ; sortie hors service : `socle/src/index.js:96` | acteur, action, objet, date, adresse, requête ; essai `socle/test/surveillance.test.js:33` |
+| REQ-DATA-005 | MEDIUM | PASS | vigie : `socle/src/vigie.js:11` ; runbook ci-dessous ; révocation globale : `socle/src/portail.js:489` | exercice du runbook à dater : action H8 |
+| REQ-DATA-006 | MEDIUM | PASS | `web/confidentialite.txt:7` ; effacement : `src/base.js:217` ; export : `socle/src/portail.js:344` | violation : délai de 72 h dans le runbook |
 | REQ-DATA-007 | MEDIUM | PASS | pièces jointes texte seulement, 5 au plus, 60 000 caractères : `src/api.js:19` ; jamais écrites sur disque ni resservies | aucun envoi de fichier binaire, aucun import par URL |
 | REQ-CODE-001 | HIGH | PASS | essais de référence avant nettoyage : 22/22 ; API publique inchangée pour le Hub (/api/duel, /api/stats, /api/health, /healthz) | voir NO-VIBE.md |
 | REQ-CODE-002 | HIGH | PASS | voir NO-VIBE.md, couche des commentaires |  |
@@ -96,7 +96,7 @@ Le service s’appelait « Oracle », le nom d’une grande entreprise : il devi
 | REQ-CODE-006 | MEDIUM | PASS | `git log --stat` : un sujet par commit, style du dépôt |  |
 | GOV-001 | HIGH | PASS | ce document : revue datée, périmètre (258 contrôles), résolution ligne par ligne | à refaire à chaque changement généré important |
 | GOV-002 | MEDIUM | PASS | section « Inventory » ci-dessous : routes, données, tiers, secrets |  |
-| GOV-003 | LOW | FAIL | `socle/src/portail.js:144` ; contact : `src/main.js:18` | essai `test/dialekt.test.js:138` ; activer le signalement privé sur le dépôt : action H3 |
+| GOV-003 | LOW | FAIL | `socle/src/portail.js:151` ; contact : `src/main.js:18` | essai `test/dialekt.test.js:138` ; activer le signalement privé sur le dépôt : action H3 |
 | GOV-004 | MEDIUM | FAIL | VM d’essai distincte de la production (règle de l’exploitant) ; données d’essai fabriquées | secrets et comptes tiers distincts à confirmer : action H6 |
 | GOV-005 | HIGH | FAIL | jeton CI éphémère et limité : `.github/workflows/publish.yml:26` | 2FA sur GitHub et consoles des fournisseurs : action H3 |
 | SEC-SECRETS-001 | CRITICAL | PASS | `git grep` de REQ-CFG-001 → aucune valeur ; detect-secrets → alphabets et vecteur public seulement | historique : gitleaks en CI (H3) |
@@ -104,29 +104,29 @@ Le service s’appelait « Oracle », le nom d’une grande entreprise : il devi
 | SEC-SECRETS-003 | CRITICAL | PASS | `.gitignore:3` ; seuls web/ et socle/web sont servis, extensions connues : essai `test/dialekt.test.js:145` (`/.env`, `/.git/config`, remontées de dossier → 404) | `.env.example:23` sans valeur |
 | SEC-SECRETS-004 | HIGH | PASS | secrets posés par le Hub depuis son coffre : `deploy/compose.hub.yml:47` ; fichiers acceptés : `socle/src/config.js:5` | jamais dans un fichier du volume ni dans la CI |
 | SEC-SECRETS-005 | HIGH | FAIL | une clé par fournisseur, lue par DIALEKT seul | restreindre et budgéter les clés chez les fournisseurs : action H6 |
-| SEC-SECRETS-006 | HIGH | FAIL | procédure de rotation par secret ci-dessous, sans interruption autre qu’un redémarrage : `socle/src/comptes.js:112` | rotation des clés vues pendant le développement : action H5 |
+| SEC-SECRETS-006 | HIGH | FAIL | procédure de rotation par secret ci-dessous, sans interruption autre qu’un redémarrage : `socle/src/comptes.js:123` | rotation des clés vues pendant le développement : action H5 |
 | SEC-SECRETS-007 | HIGH | PASS | clé maîtresse 32 octets aléatoires : `socle/src/chiffre.js:24` ; valeurs d’exemple refusées : `socle/src/config.js:54` | aucun repli de secret par défaut |
-| SEC-SECRETS-008 | MEDIUM | PASS | `socle/src/config.js:14` ; mode dégradé affiché en permanence : `socle/web/compte.js:703` | aucun mode débogage, aucun compte de démonstration |
+| SEC-SECRETS-008 | MEDIUM | PASS | `socle/src/config.js:14` ; mode dégradé affiché en permanence : `socle/web/compte.js:769` | aucun mode débogage, aucun compte de démonstration |
 | SEC-AUTH-001 | CRITICAL | PASS | voir REQ-CRYPT-001 |  |
 | SEC-AUTH-002 | MEDIUM | PASS | voir REQ-CRYPT-004 |  |
 | SEC-AUTH-003 | CRITICAL | PASS | voir REQ-AUTH-010 |  |
 | SEC-AUTH-004 | MEDIUM | PASS | voir REQ-AUTH-011 |  |
-| SEC-AUTH-005 | CRITICAL | PASS | voir REQ-AUTH-006 ; lien depuis l’adresse publique : `socle/src/portail.js:55` | sans adresse publique, l’origine attestée par le navigateur de l’administrateur, contrôlée sur la même requête |
-| SEC-AUTH-006 | MEDIUM | PASS | confirmation sur la nouvelle adresse et avis à l’ancienne : `socle/src/comptes.js:956` | essai `socle/test/courriel.test.js:122` |
-| SEC-AUTH-007 | HIGH | PASS | TOTP et clés pour tous, second facteur imposé aux administrateurs : `socle/src/comptes.js:164` | codes de secours toujours émis |
+| SEC-AUTH-005 | CRITICAL | PASS | voir REQ-AUTH-006 ; lien depuis l’adresse publique : `socle/src/portail.js:56` | sans adresse publique, l’origine attestée par le navigateur de l’administrateur, contrôlée sur la même requête |
+| SEC-AUTH-006 | MEDIUM | PASS | confirmation sur la nouvelle adresse et avis à l’ancienne : `socle/src/comptes.js:1047` | essai `socle/test/courriel.test.js:122` |
+| SEC-AUTH-007 | HIGH | PASS | TOTP et clés pour tous, second facteur imposé aux administrateurs : `socle/src/comptes.js:178` | codes de secours toujours émis |
 | SEC-AUTH-008 | HIGH | N/A | aucune connexion par fournisseur externe : `grep -rniE "oauth\|openid\|id_token\|redirect_uri" socle/src src` → seulement le nom de variable CLAUDE_CODE_OAUTH_TOKEN (jeton transmis à la CLI de l’adversaire) |  |
-| SEC-AUTH-009 | HIGH | PASS | les liens reçus par courriel demandent un geste : `socle/web/compte.js:449` ; uniques et courts : `socle/src/comptes.js:34` | aucune connexion sans mot de passe par courriel |
+| SEC-AUTH-009 | HIGH | PASS | les liens reçus par courriel demandent un geste : `socle/web/compte.js:452` ; uniques et courts : `socle/src/comptes.js:38` | aucune connexion sans mot de passe par courriel |
 | SEC-AUTH-010 | CRITICAL | PASS | `socle/src/portail.js:7` appelé par chaque route : `src/api.js:39` | essai de balayage sans session |
-| SEC-AUTH-011 | HIGH | PASS | `socle/src/http.js:165` ; session illisible = pas de session : `socle/src/comptes.js:291` | aucun chemin d’exception n’ouvre l’accès |
+| SEC-AUTH-011 | HIGH | PASS | `socle/src/http.js:171` ; session illisible = pas de session : `socle/src/comptes.js:310` | aucun chemin d’exception n’ouvre l’accès |
 | SEC-SESS-001 | CRITICAL | PASS | voir REQ-SESS-001 |  |
-| SEC-SESS-002 | HIGH | PASS | `grep -rn "localStorage" web socle/web` → thème clair ou sombre seulement (`socle/web/compte.js:299`) |  |
-| SEC-SESS-003 | HIGH | PASS | 256 bits : `socle/src/comptes.js:271` | renouvelé à chaque changement de niveau |
+| SEC-SESS-002 | HIGH | PASS | `grep -rn "localStorage" web socle/web` → thème clair ou sombre seulement (`socle/web/compte.js:302`) |  |
+| SEC-SESS-003 | HIGH | PASS | 256 bits : `socle/src/comptes.js:289` | renouvelé à chaque changement de niveau |
 | SEC-SESS-004 | HIGH | PASS | voir REQ-SESS-003, REQ-SESS-004 et REQ-SESS-006 |  |
 | SEC-SESS-005 | CRITICAL | N/A | aucun JWT : `grep -rniE "jwt\|jsonwebtoken\|jose" src web socle` → 0 ligne |  |
 | SEC-SESS-006 | MEDIUM | N/A | aucun jeton de rafraîchissement : sessions serveur (voir SEC-SESS-005) |  |
 | SEC-SESS-007 | MEDIUM | PASS | voir REQ-SESS-005 ; avis par courriel via le canal d’alerte | courriel : H2 |
 | SEC-AUTHZ-001 | CRITICAL | PASS | `src/base.js:86` ; chaque requête filtre par le compte de la session | essai IDOR |
-| SEC-AUTHZ-002 | CRITICAL | PASS | `src/api.js:129` ; rôle lu en base : `socle/src/portail.js:116` |  |
+| SEC-AUTHZ-002 | CRITICAL | PASS | `src/api.js:129` ; rôle lu en base : `socle/src/portail.js:120` |  |
 | SEC-AUTHZ-003 | HIGH | PASS | schémas stricts, champs inconnus refusés : `socle/src/schema.js:69` | essai `test/dialekt.test.js:213` |
 | SEC-AUTHZ-004 | HIGH | PASS | route inconnue → 404 : `src/api.js:217` ; seules routes publiques : `src/api.js:62` et l’état du portail |  |
 | SEC-AUTHZ-005 | CRITICAL | N/A | aucune organisation ni espace partagé : chaque objet appartient à un seul compte (`src/base.js:98`) |  |
@@ -137,7 +137,7 @@ Le service s’appelait « Oracle », le nom d’une grande entreprise : il devi
 | SEC-INJ-002 | HIGH | N/A | aucun ORM : node:sqlite, requêtes préparées seulement |  |
 | SEC-INJ-003 | HIGH | N/A | aucune base documentaire : SQLite seulement |  |
 | SEC-INJ-004 | CRITICAL | PASS | `src/adversaires.js:213` sans shell ; question par l’entrée standard | essai `test/dialekt.test.js:328` |
-| SEC-INJ-005 | HIGH | PASS | `socle/src/http.js:188` | aucun nom de fichier fourni par l’utilisateur n’est ouvert |
+| SEC-INJ-005 | HIGH | PASS | `socle/src/http.js:205` | aucun nom de fichier fourni par l’utilisateur n’est ouvert |
 | SEC-INJ-006 | HIGH | N/A | aucun moteur de gabarit : `grep -rniwE "handlebars\|ejs\|nunjucks\|mustache" src socle/src` → 0 ligne ; `grep -rnE "new Function\|node:vm" src socle/src` → 0 ligne |  |
 | SEC-INJ-007 | HIGH | N/A | aucun analyseur XML côté serveur : `grep -rniE "xml2js\|sax\|libxml\|fast-xml" src socle/src` → 0 ligne |  |
 | SEC-INJ-008 | HIGH | PASS | JSON seulement ; clés de prototype refusées : `socle/src/schema.js:6` | aucune fusion récursive d’un corps de requête |
@@ -145,8 +145,8 @@ Le service s’appelait « Oracle », le nom d’une grande entreprise : il devi
 | SEC-XSS-002 | HIGH | PASS | Markdown rendu en nœuds DOM, jamais en HTML : `web/rendu.js:1` ; liens http(s) seulement : `web/rendu.js:7` | formules KaTeX sans confiance : `web/rendu.js:27` |
 | SEC-XSS-003 | HIGH | PASS | aucun eval, setTimeout chaîne ni affectation de location : `grep -rnE "eval\(\|new Function\|location\.href *=" web socle/web` → 0 ligne | le hash ne sert qu’à choisir une page : `web/app.js:496` |
 | SEC-XSS-004 | HIGH | PASS | voir REQ-WEB-002 |  |
-| SEC-XSS-005 | MEDIUM | PASS | seul échange : le Worker de preuve de travail, de même origine : `socle/web/compte.js:233` | aucune iframe, aucune écoute de window message |
-| SEC-XSS-006 | MEDIUM | PASS | aucune carte de source servie ; erreurs réduites à un message : `socle/src/http.js:165` | l’adresse d’Ollama n’est montrée qu’aux administrateurs |
+| SEC-XSS-005 | MEDIUM | PASS | seul échange : le Worker de preuve de travail, de même origine : `socle/web/compte.js:236` | aucune iframe, aucune écoute de window message |
+| SEC-XSS-006 | MEDIUM | PASS | aucune carte de source servie ; erreurs réduites à un message : `socle/src/http.js:171` | l’adresse d’Ollama n’est montrée qu’aux administrateurs |
 | SEC-XSS-007 | MEDIUM | N/A | aucune redirection pilotée par paramètre : `grep -rnE "searchParams.get\(.(next\|redirect)" src web socle` → 0 ligne |  |
 | SEC-XSS-008 | MEDIUM | PASS | aucun script tiers : KaTeX servi par DIALEKT, empreinte vérifiée (`web/vendor/PROVENANCE:4`) | essai `test/fournitures.test.js:10` |
 | SEC-HDR-001 | HIGH | FAIL | voir REQ-WEB-001 | action H1 |
@@ -156,7 +156,7 @@ Le service s’appelait « Oracle », le nom d’une grande entreprise : il devi
 | SEC-HDR-005 | MEDIUM | PASS | no-store sur l’API et les pages : `socle/src/http.js:150` | fichiers statiques du socle en cache public d’une heure |
 | SEC-HDR-006 | CRITICAL | PASS | voir REQ-WEB-004 |  |
 | SEC-HDR-007 | HIGH | PASS | voir REQ-SESS-001 |  |
-| SEC-CSRF-001 | HIGH | PASS | SameSite=Strict + origine + jeton : `socle/src/portail.js:94` | essai `socle/test/parcours.test.js:200` |
+| SEC-CSRF-001 | HIGH | PASS | SameSite=Strict + origine + jeton : `socle/src/portail.js:98` | essai `socle/test/parcours.test.js:200` |
 | SEC-CSRF-002 | MEDIUM | PASS | `socle/src/http.js:122` | 415 sur tout autre type |
 | SEC-CSRF-003 | MEDIUM | PASS | aucune écriture sur GET : routes GET en lecture seule (src/api.js, socle/src/portail.js) | les liens de courriel demandent un geste, puis un POST |
 | SEC-CSRF-004 | CRITICAL | PASS | aucune URL fournie par l’utilisateur n’est appelée : destinations fixées par la configuration (`src/config.js:23`, `src/config.js:28`) et recherche vers DuckDuckGo (`src/recherche.js:31`) | les liens des résultats ne sont jamais ouverts par le serveur |
@@ -168,7 +168,7 @@ Le service s’appelait « Oracle », le nom d’une grande entreprise : il devi
 | SEC-API-004 | HIGH | PASS | duels réduits aux champs utiles : `src/base.js:117` ; aucun secret ni empreinte dans les réponses | essai « rien d’interne » |
 | SEC-API-005 | MEDIUM | PASS | 405 avec Allow : `src/api.js:218` ; aucune page de documentation (essai « pas de page de doc ») | TRACE et OPTIONS → 405 |
 | SEC-API-006 | HIGH | N/A | aucun GraphQL : `grep -rniE "graphql\|apollo" src web socle` → 0 ligne |  |
-| SEC-API-007 | MEDIUM | PASS | un seul formateur d’erreurs : `socle/src/http.js:159` | transactions pour les écritures multiples : `socle/src/comptes.js:136` |
+| SEC-API-007 | MEDIUM | PASS | un seul formateur d’erreurs : `socle/src/http.js:159` | transactions pour les écritures multiples : `socle/src/comptes.js:147` |
 | SEC-API-008 | MEDIUM | N/A | aucune opération monétaire ni crédit : `grep -rniE "stripe\|paypal\|checkout\|invoice\|payout\|refund" src web/*.js socle/src socle/web/*.js` → 0 ligne : aucun paiement |  |
 | SEC-API-009 | HIGH | PASS | pas de RPC : chaque route HTTP vérifie session, rôle et schéma (voir SEC-AUTH-010) |  |
 | SEC-API-010 | MEDIUM | PASS | `socle/src/http.js:128` ; 64 Kio par défaut, 512 Kio pour un duel avec pièces jointes | essai 413 sur 600 000 caractères |
@@ -178,10 +178,10 @@ Le service s’appelait « Oracle », le nom d’une grande entreprise : il devi
 | SEC-DB-004 | MEDIUM | PASS | secrets TOTP scellés AES-256-GCM liés au compte : `socle/src/chiffre.js:60` ; clés d’API hors base |  |
 | SEC-DB-005 | CRITICAL | PASS | voir SEC-INJ-001 |  |
 | SEC-DB-006 | HIGH | FAIL | voir REQ-DATA-003 | action H8 |
-| SEC-DB-007 | MEDIUM | PASS | essais sur données fabriquées ; aucun compte par défaut : jeton d’installation exigé (`socle/src/comptes.js:231`) |  |
+| SEC-DB-007 | MEDIUM | PASS | essais sur données fabriquées ; aucun compte par défaut : jeton d’installation exigé (`socle/src/comptes.js:249`) |  |
 | SEC-DB-008 | CRITICAL | N/A | le navigateur ne parle jamais à la base : SQLite côté serveur seulement |  |
 | SEC-DB-009 | LOW | PASS | `src/base.js:44` ; listes plafonnées | un seul processus, pas de pool nécessaire |
-| SEC-DB-010 | LOW | PASS | export de données tracé : `socle/src/portail.js:333` | aucun export administratif en masse |
+| SEC-DB-010 | LOW | PASS | export de données tracé : `socle/src/portail.js:347` | aucun export administratif en masse |
 | SEC-FILE-001 | HIGH | PASS | aucun fichier binaire accepté : pièces jointes texte en JSON, type énuméré (`src/api.js:20`) | une « image » n’est qu’un nom mentionné dans la consigne |
 | SEC-FILE-002 | MEDIUM | PASS | 5 pièces, 60 000 caractères chacune, corps de 512 Kio : `src/api.js:19` |  |
 | SEC-FILE-003 | HIGH | PASS | rien n’est écrit sur disque : les pièces jointes ne vivent que le temps du duel (`src/duel.js:40`) |  |
@@ -195,9 +195,9 @@ Le service s’appelait « Oracle », le nom d’une grande entreprise : il devi
 | SEC-PAY-003 | HIGH | N/A | `grep -rniE "stripe\|paypal\|checkout\|invoice\|payout\|refund" src web/*.js socle/src socle/web/*.js` → 0 ligne : aucun paiement ; aucun abonnement |  |
 | SEC-PAY-004 | HIGH | N/A | `grep -rniE "stripe\|paypal\|checkout\|invoice\|payout\|refund" src web/*.js socle/src socle/web/*.js` → 0 ligne : aucun paiement |  |
 | SEC-PAY-005 | HIGH | N/A | `grep -rniE "stripe\|paypal\|checkout\|invoice\|payout\|refund" src web/*.js socle/src socle/web/*.js` → 0 ligne : aucun paiement |  |
-| SEC-PAY-006 | HIGH | PASS | vérification : 5 par heure par compte et par adresse (`socle/src/portail.js:37`) ; alertes : 30 par heure et par compte (`socle/src/notifications.js:98`) |  |
+| SEC-PAY-006 | HIGH | PASS | vérification : 5 par heure par compte et par adresse (`socle/src/portail.js:38`) ; alertes : 30 par heure et par compte (`socle/src/notifications.js:98`) |  |
 | SEC-PAY-007 | MEDIUM | FAIL | le domaine d’expédition est celui du relais de l’exploitant | SPF, DKIM et DMARC à publier avec le relais : action H2 |
-| SEC-PAY-008 | MEDIUM | PASS | aucun mot de passe dans un courriel ; liens uniques, hachés, de 30 minutes (`socle/src/comptes.js:34`) ou 72 heures pour fermer les sessions (`socle/src/notifications.js:27`) | le lien de révocation ne peut que fermer des sessions |
+| SEC-PAY-008 | MEDIUM | PASS | aucun mot de passe dans un courriel ; liens uniques, hachés, de 30 minutes (`socle/src/comptes.js:38`) ou 72 heures pour fermer les sessions (`socle/src/notifications.js:27`) | le lien de révocation ne peut que fermer des sessions |
 | SEC-NEXT-001 | CRITICAL | N/A | Node sans cadriciel : `package.json:5`, aucune dépendance ; `grep -rniE "next/\|nextjs\|use server" src web socle` → 0 ligne |  |
 | SEC-NEXT-002 | CRITICAL | N/A | Node sans cadriciel : `package.json:5`, aucune dépendance ; `grep -rniE "next/\|nextjs\|use server" src web socle` → 0 ligne |  |
 | SEC-NEXT-003 | HIGH | N/A | Node sans cadriciel : `package.json:5`, aucune dépendance ; `grep -rniE "next/\|nextjs\|use server" src web socle` → 0 ligne |  |
@@ -264,14 +264,14 @@ Le service s’appelait « Oracle », le nom d’une grande entreprise : il devi
 | SEC-LOG-001 | MEDIUM | PASS | voir REQ-DATA-004 ; identifiant de requête : `socle/src/requete.js:12` |  |
 | SEC-LOG-002 | HIGH | PASS | `socle/src/journal.js:10` ; jamais le texte des conversations au journal | essai « ni mot de passe ni secret au journal » |
 | SEC-LOG-003 | MEDIUM | FAIL | sortie standard conservée par Docker, hors de portée du service : `deploy/compose.hub.yml:27` | collecteur central hors hôte : action H11 |
-| SEC-LOG-004 | MEDIUM | PASS | vigie : échecs, refus, limites, erreurs, connexion d’un administrateur (`socle/src/vigie.js:11`) ; refus d’origine et de jeton anti-CSRF journalisés : `socle/src/portail.js:105` ; dépense : `src/api.js:56` | courriel (H2) et alertes de facturation (H6) pour sortir de l’application |
+| SEC-LOG-004 | MEDIUM | PASS | vigie : échecs, refus, limites, erreurs, connexion d’un administrateur (`socle/src/vigie.js:11`) ; refus d’origine et de jeton anti-CSRF journalisés : `socle/src/portail.js:109` ; dépense : `src/api.js:56` | courriel (H2) et alertes de facturation (H6) pour sortir de l’application |
 | SEC-LOG-005 | LOW | FAIL | sonde du Hub sur /healthz toutes les 30 s (`hub.json:480`) | surveillance externe : action H10 |
 | SEC-LOG-006 | MEDIUM | PASS | runbook ci-dessous |  |
-| SEC-LOG-007 | HIGH | PASS | fermeture globale des sessions : `socle/src/portail.js:475` ; rotation de SOCLE_CLE exercée (`outils/exercice-rotation.mjs:1`) ; l’adversaire, seule fonction payante, se coupe en vidant sa clé dans le Hub puis en redéployant (runbook) |  |
-| SEC-PRIV-001 | MEDIUM | PASS | `web/confidentialite.txt:7` avec durées ; purges automatiques : `socle/src/comptes.js:971` |  |
+| SEC-LOG-007 | HIGH | PASS | fermeture globale des sessions : `socle/src/portail.js:489` ; rotation de SOCLE_CLE exercée (`outils/exercice-rotation.mjs:1`) ; l’adversaire, seule fonction payante, se coupe en vidant sa clé dans le Hub puis en redéployant (runbook) |  |
+| SEC-PRIV-001 | MEDIUM | PASS | `web/confidentialite.txt:7` avec durées ; purges automatiques : `socle/src/comptes.js:1062` |  |
 | SEC-PRIV-002 | MEDIUM | PASS | un cookie de session indispensable, documenté ; aucun traceur (`web/confidentialite.txt:49`) |  |
 | SEC-PRIV-003 | MEDIUM | PASS | `web/confidentialite.txt:34` nomme chaque destinataire ; lien depuis la page Sécurité |  |
-| SEC-PRIV-004 | MEDIUM | PASS | export : `socle/src/portail.js:330` ; effacement en libre-service sous renfort, identifiant retapé : `socle/src/comptes.js:841` ; conversations, projets et quotas avec le compte : `src/base.js:217` | essais `test/dialekt.test.js:154` et `test/dialekt.test.js:171` |
+| SEC-PRIV-004 | MEDIUM | PASS | export : `socle/src/portail.js:344` ; effacement en libre-service sous renfort, identifiant retapé : `socle/src/comptes.js:932` ; conversations, projets et quotas avec le compte : `src/base.js:217` | essais `test/dialekt.test.js:154` et `test/dialekt.test.js:171` |
 | SEC-PRIV-005 | HIGH | FAIL | voir REQ-DATA-002 | action H7 |
 | SEC-PRIV-006 | LOW | FAIL | destinataires nommés dans `web/confidentialite.txt:40` | conditions et accord de traitement du fournisseur choisi : action H15 |
 | SEC-PRIV-007 | MEDIUM | PASS | runbook : notification sous 72 heures |  |
@@ -408,3 +408,5 @@ Routes publiques : `GET /healthz`, `GET /.well-known/security.txt`, `GET /api/co
 Données : `dialekt.db` (`oracle.db` avant le changement de nom) (comptes, sessions, jetons hachés, alertes, journal chaîné, conversations, projets, quotas — sensibilité : personnelle), `settings.json` (réglages), volume `/app/data`, dossier en 0700.
 
 Tiers : fournisseur de l'adversaire (clé ou jeton), DuckDuckGo (recherche web, sans clé), Ollama et SYNAPSE de l'exploitant, relais SMTP de l'exploitant.
+
+Suivi du 2026-10-25 (2.2.2) : mise en page, et relais de confiance. Socle 6f2c864 embarqué : un seul écart entre cartes (`--ecart`, 16 px, 12 px sur petit écran), deux colonnes finissant à la même ligne, cartes des pages Sécurité et Comptes l'une sous l'autre, et un contrôle de mise en page qui relève tout écart différent et toute colonne inégale. DIALEKT prend cet écart dans la salle de duel (`web/dialekt.css`) : entre la question, les deux réponses, le verdict, l'échange suivant et la saisie ; les deux réponses d'une rangée finissent à la même ligne ; un fil court se pose au-dessus de la saisie au lieu de laisser un trou sous la dernière réponse ; la liste des conversations et les cartes de Réglages occupent la hauteur de leur rangée ; une conversation ou un projet au nom coupé est une ligne de données, nom entier au survol ; les idées de l'accueil tiennent sur une ligne au téléphone. Le socle nomme désormais `.barre` sa barre d'outils : les barres du verdict, qui portaient ce nom, s'affichaient vides ; elles deviennent `.crit-barre`. Relais de confiance : ouvert en HTTPS par Relay (tunnel Cloudflare), DIALEKT se croyait en HTTP et refusait les clés d'accès, le relais de confiance du manifeste étant vide (`X-Forwarded-Proto` n'est lu que d'un relais déclaré, `socle/src/http.js:43`) ; défaut désormais : le réseau Docker du Hub (`hub.json`, « Relais de confiance »), une adresse du réseau local n'est jamais de confiance. Essai : `test/dialekt.test.js` (« derrière Relay »), le défaut lu comme le socle le lit. Le parcours du navigateur contrôle aussi la page Comptes. Aucune route ne change, aucun contrôle ne change de statut. Essais : 29 du service, 77 du socle ; parcours du navigateur dans les quatre gammes (SOMA, Console, Exploitation, Lavande) : 64 écrans × largeurs chacune, 0 défaut, 0 erreur de console. DIALEKT garde son apparence propre quelle que soit la gamme posée : les quatre passes rendent la même interface.
