@@ -102,7 +102,7 @@ function listeConversations({ compacte }) {
   const peindre = tous => {
     const items = !compacte && E.projet ? tous.filter(c => c.project_id === E.projet) : tous;
     if (!items.length) return corps.replaceChildren(h('p', { class: 'vide', text: E.filtre || E.projet ? 'Rien ne correspond.' : 'Aucune conversation pour l’instant.' }));
-    corps.replaceChildren(...items.map(c => h('button', { class: 'conv' + (c.id === E.courante ? ' on' : ''), type: 'button', onclick: () => aller('duel', { conv: c.id }) },
+    corps.replaceChildren(...items.map(c => h('button', { class: 'conv' + (c.id === E.courante ? ' on' : ''), type: 'button', 'data-donnee': '', title: c.title || 'Sans titre', onclick: () => aller('duel', { conv: c.id }) },
       h('span', { class: 'conv-t tronque', text: c.title || 'Sans titre' }),
       h('span', { class: 'conv-m' }, c.pinned ? ic('epingle', 12) : null, c.project_name ? h('span', { class: 'chip', text: c.project_name }) : null,
         h('span', { class: 'dim', text: [c.n ? `${c.n} échange${c.n > 1 ? 's' : ''}` : null, c.last_winner ? (c.last_winner === 'qwen' ? 'local' : nomAdverse()) : null].filter(Boolean).join(' · ') })))));
@@ -152,7 +152,7 @@ function carteProjets() {
   const creer = sur(async () => { const n = await nommer('Nouveau projet'); if (n) { await api.post('/api/projects', { name: n }); aller('conversations'); } });
   const ligne = p => h('div', { class: 'flowrow' + (E.projet === p.id ? ' on' : '') },
     h('div', { class: 'itile' }, ic('dossier')),
-    h('button', { class: 'ligne-choix', type: 'button', 'aria-pressed': String(E.projet === p.id), onclick: () => { E.projet = E.projet === p.id ? null : p.id; aller('conversations'); } },
+    h('button', { class: 'ligne-choix', type: 'button', 'data-donnee': '', title: p.name, 'aria-pressed': String(E.projet === p.id), onclick: () => { E.projet = E.projet === p.id ? null : p.id; aller('conversations'); } },
       h('strong', { class: 'tronque', text: p.name }), h('small', { text: `${p.n} conversation${p.n > 1 ? 's' : ''}${E.projet === p.id ? ' · filtre actif' : ''}` })),
     peutJouer ? actionsProjet(p, nommer, sur) : h('span'));
   return h('div', { class: 'card' },
@@ -298,10 +298,10 @@ function peindreVerdict(x, v, seul) {
     h('header', {}, h('b', { text: `${v.winner === 'qwen' ? 'Le modèle local' : nomAdverse()} l’emporte` }), h('span', { class: 'mono dim', text: `${v.qwen.total} contre ${v.claude.total} · écart ${v.gap}` })),
     h('div', { class: 'crit' }, criteres.map(k => h('div', { class: 'ligne-crit' },
       h('span', { class: 'dim', text: k }),
-      h('span', { class: 'barre local' }, h('i', { dataset: { v: v.qwen.crit[k] } })), h('b', { class: 'mono', text: String(v.qwen.crit[k]) }),
-      h('span', { class: 'barre adverse' }, h('i', { dataset: { v: v.claude.crit[k] } })), h('b', { class: 'mono', text: String(v.claude.crit[k]) })))),
+      h('span', { class: 'crit-barre local' }, h('i', { dataset: { v: v.qwen.crit[k] } })), h('b', { class: 'mono', text: String(v.qwen.crit[k]) }),
+      h('span', { class: 'crit-barre adverse' }, h('i', { dataset: { v: v.claude.crit[k] } })), h('b', { class: 'mono', text: String(v.claude.crit[k]) })))),
     ...(v.delta?.length ? [h('p', { class: 'delta' }, h('span', { class: 'dim', text: 'Ce que le gagnant a en plus : ' }), v.delta.map(d => h('span', { class: 'chip a', text: d })))] : []));
-  for (const i of x.verdict.querySelectorAll('.barre i')) i.style.width = `${Math.max(0, Math.min(10, Number(i.dataset.v))) * 10}%`;
+  for (const i of x.verdict.querySelectorAll('.crit-barre i')) i.style.width = `${Math.max(0, Math.min(10, Number(i.dataset.v))) * 10}%`;
 }
 
 function echangeEnregistre(d) {
@@ -453,10 +453,10 @@ async function pageReglages() {
       h('div', { class: 'actions' }, h('button', { class: 'btn solid', type: 'button', onclick: enregistrer }, icone('verifie'), 'Enregistrer'))),
     m.ollama_error ? h('div', { class: 'note bad' }, icone('alerte'), h('div', { text: m.ollama_error })) : null,
     h('div', { class: 'split' },
-      h('div', { class: 'card' }, h('header', {}, h('h2', { text: 'Modèle local' }), h('span', { class: 'note', text: m.ollama_url || '' })),
+      h('div', { class: 'card carte-pleine' }, h('header', {}, h('h2', { text: 'Modèle local' }), h('span', { class: 'note', text: m.ollama_url || '' })),
         h('div', { class: 'pad' }, local.noeud, h('label', { class: 'champ' }, h('span', { class: 'lbl', text: 'Mode par défaut' }), mode), h('div', { class: 'row2 grpf' }, ctx.noeud, lon.noeud),
           h('div', { class: 'flowrow nu' }, reflexion, h('div', {}, h('strong', { text: 'Réflexion avant de répondre' }), h('small', { text: 'Plus juste sur les questions difficiles, bien plus lent sur le reste.' })), h('span')))),
-      h('div', { class: 'card' }, h('header', {}, h('h2', { text: 'Adversaire' }), h('span', { class: 'note', text: m.adversaire.id })),
+      h('div', { class: 'card carte-pleine' }, h('header', {}, h('h2', { text: 'Adversaire' }), h('span', { class: 'note', text: m.adversaire.id })),
         h('div', { class: 'pad' },
           m.adversaire.manque ? h('div', { class: 'note warn' }, icone('alerte'), h('div', { text: m.adversaire.manque })) : h('div', { class: 'note ok' }, icone('verifie'), h('div', { text: `${m.adversaire.nom} est prêt.` })),
           adverse ? h('div', { class: 'grpf' }, adverse.noeud) : h('p', { class: 'hint', text: 'Le fournisseur n’a pas renvoyé de liste de modèles : le modèle vient de la configuration du Hub.' }),
