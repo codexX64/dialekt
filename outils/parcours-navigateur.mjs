@@ -4,6 +4,7 @@
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 import { chevauchements, LARGEURS } from '../socle/essai/mise-en-page.mjs';
+import { passerAssistant, ouvrirReglagesService } from '../socle/essai/assistant-navigateur.mjs';
 
 const [base, jeton, sortie = '/tmp/captures-dialekt'] = process.argv.slice(2);
 fs.mkdirSync(sortie, { recursive: true });
@@ -37,6 +38,7 @@ await page.getByRole('button', { name: 'Créer le compte' }).click();
 await page.getByRole('button', { name: /Créer la clé maintenant/ }).click();
 await page.getByText('J’ai rangé ces codes en lieu sûr.').click();
 await page.getByRole('button', { name: 'Terminer' }).click();
+await passerAssistant(page, { controle });
 await page.locator('.salle').waitFor();
 await controle('accueil-duel');
 
