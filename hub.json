@@ -3,7 +3,7 @@
   "manifestVersion": 1,
   "id": "dialekt",
   "name": "DIALEKT",
-  "version": "2.2.2",
+  "version": "2.3.0",
   "description": "IA locale (Ollama) en duel contre Claude, ChatGPT, Kimi ou un autre : un juge déterministe départage sur des critères mesurables.",
   "icon": "sparkle",
   "repository": "https://github.com/codexX64/dialekt",
@@ -63,7 +63,7 @@
       "key": "IMAGE_TAG",
       "label": "Version de l'image",
       "type": "string",
-      "default": "2.2.2",
+      "default": "2.3.0",
       "advanced": true,
       "help": "Étiquette de l'image publiée sur ghcr.io."
     },

@@ -1,6 +1,6 @@
 {
   "name": "dialekt",
-  "version": "2.2.2",
+  "version": "2.3.0",
   "description": "Une IA locale en duel contre une IA en ligne, départagées par un juge déterministe.",
   "type": "module",
   "private": true,
