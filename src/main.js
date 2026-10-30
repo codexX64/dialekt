@@ -1,7 +1,7 @@
 // Démarrage de DIALEKT : configuration validée, base, socle commun, serveur.
 import http from 'node:http';
 import path from 'node:path';
-import { lireConfigDialekt, VERSION } from './config.js';
+import { lireConfigDialekt, VERSION, SPEC_DIALEKT, REGLAGES_DIALEKT } from './config.js';
 import { ouvrirBase, Conversations } from './base.js';
 import { migrerV1 } from './migration.js';
 import { Ollama } from './ollama.js';
@@ -10,17 +10,23 @@ import { Reglages, persona } from './reglages.js';
 import { Synapse } from './synapse.js';
 import { Duels } from './duel.js';
 import { creerApi } from './api.js';
-import { Debit, ErreurHttp, demarrerSocle, entetesSecurite, envelopper, nonceCsp, politiqueContenu, repondreErreur, repondreJson, servirFichier } from '../socle/src/index.js';
+import { Debit, ErreurHttp, appliquerReglages, demarrerSocle, lireNouveautes, superviser, entetesSecurite, envelopper, nonceCsp, politiqueContenu, repondreErreur, repondreJson, servirFichier } from '../socle/src/index.js';
 
 const RACINE = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const CONSOLE = { info: (...a) => console.log(...a), warn: (...a) => console.warn(...a), error: (...a) => console.error(...a) };
 // Signalement privé d'une faille, sur le dépôt : lu par le mainteneur.
 const CONTACT_SECURITE = 'https://github.com/codexX64/dialekt/security/advisories/new';
 
-export async function demarrer(env = process.env, { log = CONSOLE } = {}) {
+export async function demarrer(envBrut = process.env, { log = CONSOLE } = {}) {
+  // Les réglages posés par l'assistant complètent l'environnement (qui garde la main).
+  const env = appliquerReglages({ dossier: envBrut.DATA_DIR || SPEC_DIALEKT.donnees.defaut, env: envBrut });
   const cfg = lireConfigDialekt(env);
   const db = ouvrirBase(cfg.donnees);
-  const socle = await demarrerSocle({ service: { id: 'dialekt', nom: 'DIALEKT', contactSecurite: CONTACT_SECURITE }, db, dossier: cfg.donnees, env, log });
+  const socle = await demarrerSocle({
+    service: { id: 'dialekt', nom: 'DIALEKT', contactSecurite: CONTACT_SECURITE }, db, dossier: cfg.donnees, env, log,
+    assistant: { reglages: REGLAGES_DIALEKT, spec: SPEC_DIALEKT, version: VERSION, controler: lireConfigDialekt },
+    version: VERSION, nouveautes: lireNouveautes(new URL('../nouveautes.json', import.meta.url)),
+  });
   migrerV1({ db, comptes: socle.comptes, coffre: socle.coffre, dossier: cfg.donnees, log });
 
   const synapse = new Synapse({ url: cfg.synapseUrl, jeton: cfg.synapseJeton, log });
@@ -66,7 +72,9 @@ export async function demarrer(env = process.env, { log = CONSOLE } = {}) {
   return { serveur, socle, cfg, db, arreter: () => new Promise(r => { socle.arreter(); serveur.close(() => { db.close(); r(); }); }) };
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Le processus du conteneur supervise le service et le relance quand
+// l'assistant a posé de nouveaux réglages.
+if (import.meta.url === `file://${process.argv[1]}` && !superviser()) {
   demarrer().then(({ arreter }) => {
     for (const s of ['SIGTERM', 'SIGINT']) process.on(s, () => arreter().then(() => process.exit(0)));
   }).catch(e => { console.error(e.message); process.exit(1); });

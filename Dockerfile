@@ -22,7 +22,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 COPY --from=claude /opt/claude /usr/local/bin/claude
 WORKDIR /app
-COPY package.json ./
+COPY package.json nouveautes.json ./
 COPY socle ./socle
 COPY src ./src
 COPY web ./web
