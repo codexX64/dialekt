@@ -131,4 +131,6 @@
   .ligne-crit .crit-barre{display:none}
   .accueil{padding:24px 0}
   .idees .chip{font-size:12px;padding:7px 10px}
+  /* Lavande : police plus large, une suggestion tient sur une ligne. */
+  html[data-gamme="lavande"] .idees .chip{font-size:11px;padding:6px 9px;letter-spacing:-.01em}
 }
